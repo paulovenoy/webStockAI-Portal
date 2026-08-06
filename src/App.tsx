@@ -69,12 +69,16 @@ const AppLayout: React.FC = () => {
     <div className="app-container">
       <header className="app-header">
         <div className="header-left">
-          <div className="header-logo">
-            <span style={{ fontWeight: 'bold', color: 'var(--primary-color)', fontSize: '1.25rem' }}>
-              Stock AI
+          <div className="header-logo" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <img 
+              src="/logo.png" 
+              alt="StockAI Icon" 
+              style={{ height: '34px', width: 'auto', borderRadius: '6px', objectFit: 'contain' }} 
+            />
+            <span style={{ fontWeight: 800, color: 'var(--primary-color)', fontSize: '1.25rem', letterSpacing: '-0.5px' }}>
+              StockAI - Portal da Empresa
             </span>
           </div>
-          <span className="header-subtitle-tag">Gestão Inteligente de Estoque</span>
         </div>
         <div className="header-right">
           <HeaderNetworkStatus />

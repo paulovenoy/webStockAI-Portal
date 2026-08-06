@@ -27,10 +27,15 @@ const Sidebar: React.FC = () => {
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
-        <div className="logo">
+        <div className="logo" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <img 
+            src="/logo.png" 
+            alt="StockAI Icon" 
+            style={{ height: '40px', width: 'auto', borderRadius: '8px', objectFit: 'contain' }} 
+          />
           <div>
-            <h2>Stock AI</h2>
-            <p>Portal da Fábrica</p>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: 800 }}>StockAI</h2>
+            <p style={{ fontSize: '0.75rem', opacity: 0.9 }}>Portal da Empresa</p>
           </div>
         </div>
       </div>
