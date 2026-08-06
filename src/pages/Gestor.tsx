@@ -177,14 +177,36 @@ const Gestor: React.FC = () => {
     });
   };
 
+  const [showHelp, setShowHelp] = useState<boolean>(false);
+
   return (
     <div className="gestor-page">
-      <header className="page-header">
+      <header className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1>Painel de Controle do Gestor</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <h1>Área & Painel de Controle do Gestor</h1>
+            <button 
+              className="btn-card-help" 
+              onClick={() => setShowHelp(!showHelp)} 
+              title="Clique para entender como funciona esta página"
+              style={{ background: 'var(--primary-light)', padding: '0.35rem 0.65rem', borderRadius: '9999px', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.775rem', fontWeight: 700, color: 'var(--primary-color)' }}
+            >
+              <span>? Como funciona a Área do Gestor</span>
+            </button>
+          </div>
           <p>Gerenciamento de categorias de insumos, parametrização mínima e auditoria do sistema</p>
         </div>
       </header>
+
+      {showHelp && (
+        <div className="card card-help-popover-wide" style={{ marginBottom: '1.5rem', background: '#0f172a', color: '#fff' }}>
+          <h4>? O QUE É E COMO FUNCIONA A ÁREA DO GESTOR:</h4>
+          <p style={{ marginTop: '0.35rem', fontSize: '0.825rem', lineHeight: '1.4' }}>
+            <strong>O QUE É:</strong> A central de administração de permissões e cadastro de matérias-primas da fábrica.<br />
+            <strong>COMO FUNCIONA:</strong> Permite ao gestor cadastrar novos insumos, alterar margens de segurança em quilos, excluir itens descontinuados e ajustar a classificação ABC.
+          </p>
+        </div>
+      )}
 
       {banner && (
         <div className={`message-banner card ${banner.type}`}>

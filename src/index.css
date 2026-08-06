@@ -4679,9 +4679,230 @@ body.high-contrast strong {
   transition: var(--transition);
 }
 
-.btn-motion-play-pause:hover {
-  transform: scale(1.05);
+/* ==========================================================================
+   ACCESSIBILITY HUB WIDGET & WCAG 2.1 STYLES
+   ========================================================================== */
+
+.accessibility-widget-btn {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 1800;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #ffffff;
+  border: 1.5px solid #ea580c;
+  padding: 0.6rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.825rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.4);
+  transition: var(--transition);
 }
+
+.accessibility-widget-btn:hover,
+.accessibility-widget-btn.active {
+  background: #ea580c;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(234, 88, 12, 0.4);
+}
+
+.accessibility-panel-modal {
+  position: fixed;
+  bottom: 75px;
+  left: 20px;
+  z-index: 1850;
+  width: 340px;
+  background-color: #ffffff;
+  border: 1.5px solid rgba(234, 88, 12, 0.3);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+  padding: 1.25rem;
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.access-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px dashed var(--border-color);
+  margin-bottom: 1rem;
+}
+
+.access-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.access-panel-title h4 {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.1;
+}
+
+.access-panel-title span {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.btn-close-access {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.2rem;
+}
+
+.btn-close-access:hover {
+  color: #ef4444;
+}
+
+.access-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.access-control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  background-color: #f8fafc;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.control-label {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.control-label strong {
+  display: block;
+  font-size: 0.8rem;
+  color: #0f172a;
+  line-height: 1.1;
+}
+
+.control-label p {
+  font-size: 0.675rem;
+  color: var(--text-muted);
+}
+
+.access-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background-color: #e2e8f0;
+  color: var(--text-main);
+  border: none;
+  padding: 0.3rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.725rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.access-toggle-btn.active {
+  background-color: #ea580c;
+  color: #ffffff;
+}
+
+.btn-group-scale {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.btn-group-scale button {
+  background-color: #e2e8f0;
+  color: var(--text-main);
+  border: none;
+  padding: 0.25rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.btn-group-scale button:hover {
+  background-color: #ea580c;
+  color: #ffffff;
+}
+
+.keyboard-shortcuts-box {
+  margin-top: 0.5rem;
+  background-color: #0f172a;
+  color: #ffffff;
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+}
+
+.shortcuts-head {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  margin-bottom: 0.4rem;
+  color: #ea580c;
+}
+
+.shortcuts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.35rem;
+  font-size: 0.675rem;
+  color: #cbd5e1;
+}
+
+.shortcuts-grid kbd {
+  background-color: #334155;
+  color: #fff;
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+  font-weight: 800;
+}
+
+/* Big Cursor Mode */
+body.big-cursor-mode,
+body.big-cursor-mode * {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24' fill='%23ea580c' stroke='%23ffffff' stroke-width='2'%3E%3Cpath d='M3 3l7 18 3-7 7-3L3 3z'/%3E%3C/svg%3E"), auto !important;
+}
+
+/* Highlight Links Mode */
+body.highlight-links-mode button,
+body.highlight-links-mode a,
+body.highlight-links-mode .nav-item {
+  outline: 3px solid #facc15 !important;
+  outline-offset: 2px !important;
+  text-decoration: underline !important;
+  text-decoration-color: #facc15 !important;
+  text-decoration-thickness: 3px !important;
+}
+
+/* Reduce Motion Mode */
+body.reduce-motion-mode * {
+  animation: none !important;
+  transition: none !important;
+}
+
 
 
 

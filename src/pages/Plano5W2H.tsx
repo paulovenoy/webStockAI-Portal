@@ -162,11 +162,23 @@ const Plano5W2H: React.FC = () => {
     }, 1000);
   };
 
+  const [showHelp, setShowHelp] = useState<boolean>(false);
+
   return (
     <div className="plan5w2h-page">
-      <header className="page-header">
+      <header className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1>Plano de Ação 5W2H</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <h1>Plano de Ação 5W2H</h1>
+            <button 
+              className="btn-card-help" 
+              onClick={() => setShowHelp(!showHelp)} 
+              title="Clique para entender como funciona esta página"
+              style={{ background: 'var(--primary-light)', padding: '0.35rem 0.65rem', borderRadius: '9999px', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.775rem', fontWeight: 700, color: 'var(--primary-color)' }}
+            >
+              <span>? Como funciona o 5W2H</span>
+            </button>
+          </div>
           <p>Definição de diretrizes corretivas e preventivas para mitigar quebras e otimizar processos logísticos</p>
         </div>
         <div>
@@ -176,6 +188,16 @@ const Plano5W2H: React.FC = () => {
           </button>
         </div>
       </header>
+
+      {showHelp && (
+        <div className="card card-help-popover-wide" style={{ marginBottom: '1.5rem', background: '#0f172a', color: '#fff' }}>
+          <h4>? O QUE É E COMO FUNCIONA O PLANO 5W2H:</h4>
+          <p style={{ marginTop: '0.35rem', fontSize: '0.825rem', lineHeight: '1.4' }}>
+            <strong>O QUE É:</strong> Uma matriz de gestão onde cada problema identificado ganha 7 respostas claras: O que fazer (What), Por que fazer (Why), Onde fazer (Where), Quando fazer (When), Quem fará (Who), Como fazer (How) e Quanto custará (How Much).<br />
+            <strong>COMO FUNCIONA:</strong> Garante responsabilidade direta e prazo para que erros do almoxarifado não se repitam.
+          </p>
+        </div>
+      )}
 
       {exportMsg && (
         <div className="export-notification card">

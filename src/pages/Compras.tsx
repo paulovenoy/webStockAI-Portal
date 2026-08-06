@@ -231,14 +231,36 @@ const Compras: React.FC = () => {
     });
   };
 
+  const [showHelp, setShowHelp] = useState<boolean>(false);
+
   return (
     <div className="compras-page">
-      <header className="page-header">
+      <header className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1>Central de Compras & Integração Financeira</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <h1>Central de Compras & Integração Financeira</h1>
+            <button 
+              className="btn-card-help" 
+              onClick={() => setShowHelp(!showHelp)} 
+              title="Clique para entender como funciona esta página"
+              style={{ background: 'var(--primary-light)', padding: '0.35rem 0.65rem', borderRadius: '9999px', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.775rem', fontWeight: 700, color: 'var(--primary-color)' }}
+            >
+              <span>? Como funciona a Central de Compras</span>
+            </button>
+          </div>
           <p>Cotação inteligente, ordens de compra automatizadas e análise de prazo de entrega</p>
         </div>
       </header>
+
+      {showHelp && (
+        <div className="card card-help-popover-wide" style={{ marginBottom: '1.5rem', background: '#0f172a', color: '#fff' }}>
+          <h4>? O QUE É E COMO FUNCIONA A CENTRAL DE COMPRAS:</h4>
+          <p style={{ marginTop: '0.35rem', fontSize: '0.825rem', lineHeight: '1.4' }}>
+            <strong>O QUE É:</strong> O módulo de reposição automática de insumos da Fábrica Três Irmãos.<br />
+            <strong>COMO FUNCIONA:</strong> Sempre que um insumo atinge a quantidade mínima, o sistema compara cotações entre fornecedores e gera uma Ordem de Compra automatizada no menor preço ou prazo de entrega.
+          </p>
+        </div>
+      )}
 
       {issuedOrder && (
         <div className="order-success-card card success">

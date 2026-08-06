@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layers, MapPin, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
+import { Layers, MapPin, AlertTriangle, CheckCircle2, Info, HelpCircle } from 'lucide-react';
 
 interface InventoryItem {
   id: number;
@@ -23,6 +23,7 @@ interface SectorDetail {
 const Deposito: React.FC = () => {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string>('Corredor A - A1');
+  const [showHelp, setShowHelp] = useState<boolean>(false);
 
   useEffect(() => {
     const localInv = localStorage.getItem('@portal-stock-ai:inventory');
@@ -73,12 +74,33 @@ const Deposito: React.FC = () => {
 
   return (
     <div className="deposito-page">
-      <header className="page-header">
+      <header className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1>Layout do Depósito & Endereçamento</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <h1>Depósito & Layout Físico</h1>
+            <button 
+              className="btn-card-help" 
+              onClick={() => setShowHelp(!showHelp)} 
+              title="Clique para entender como funciona esta página"
+              style={{ background: 'var(--primary-light)', padding: '0.35rem 0.65rem', borderRadius: '9999px', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.775rem', fontWeight: 700, color: 'var(--primary-color)' }}
+            >
+              <HelpCircle size={15} />
+              <span>? Como funciona o Depósito</span>
+            </button>
+          </div>
           <p>Mapeamento visual e planta baixa técnica do armazém - Jardim Catarina (SG)</p>
         </div>
       </header>
+
+      {showHelp && (
+        <div className="card card-help-popover-wide" style={{ marginBottom: '1.5rem', background: '#0f172a', color: '#fff' }}>
+          <h4>? O QUE É E COMO FUNCIONA O DEPÓSITO & LAYOUT:</h4>
+          <p style={{ marginTop: '0.35rem', fontSize: '0.825rem', lineHeight: '1.4' }}>
+            <strong>O QUE É:</strong> Esta página mapeia a planta baixa técnica dos Corredores A, B e C da Fábrica Três Irmãos.<br />
+            <strong>COMO FUNCIONA:</strong> Clicar em qualquer prateleira no mapa exibe instantaneamente os sacos de farinha, açúcares ou fermentos estocados naquele local específico.
+          </p>
+        </div>
+      )}
 
       <div className="deposito-layout-container">
         <div className="map-card card">

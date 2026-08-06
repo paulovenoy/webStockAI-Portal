@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layers, Barcode, Navigation, ClipboardCheck, Info, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Layers, Barcode, Navigation, ClipboardCheck, Info, CheckCircle2, AlertTriangle, HelpCircle } from 'lucide-react';
 
 interface InventoryItem {
   id: number;
@@ -377,14 +377,37 @@ const WMSInteligente: React.FC = () => {
     }
   };
 
+  const [showHelp, setShowHelp] = useState<boolean>(false);
+
   return (
     <div className="wms-page">
-      <header className="page-header">
+      <header className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1>Gestão Inteligente WMS</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <h1>Gestão Inteligente WMS (Warehouse Management)</h1>
+            <button 
+              className="btn-card-help" 
+              onClick={() => setShowHelp(!showHelp)} 
+              title="Clique para entender como funciona esta página"
+              style={{ background: 'var(--primary-light)', padding: '0.35rem 0.65rem', borderRadius: '9999px', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.775rem', fontWeight: 700, color: 'var(--primary-color)' }}
+            >
+              <HelpCircle size={15} />
+              <span>? Como funciona o WMS Inteligente</span>
+            </button>
+          </div>
           <p>Controle de racks verticais, expedição/recebimento óptico, otimizador de rotas de picking e auditorias de acurácia</p>
         </div>
       </header>
+
+      {showHelp && (
+        <div className="card card-help-popover-wide" style={{ marginBottom: '1.5rem', background: '#0f172a', color: '#fff' }}>
+          <h4>? O QUE É E COMO FUNCIONA O WMS INTELIGENTE:</h4>
+          <p style={{ marginTop: '0.35rem', fontSize: '0.825rem', lineHeight: '1.4' }}>
+            <strong>O QUE É:</strong> O sistema de gerenciamento de armazém em alta definição (WMS), integrado à inteligência artificial Oliver AI.<br />
+            <strong>COMO FUNCIONA:</strong> Rastreia posições nos racks verticais (A1 a C1), calcula a Rota Ótima de Coleta FEFO para os conferentes e permite leitura de código de barras por leitor óptico.
+          </p>
+        </div>
+      )}
 
       {/* Tabs Menu */}
       <div className="card" style={{ padding: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', borderBottom: 'none' }}>

@@ -11,6 +11,7 @@ import Ishikawa from './pages/Ishikawa';
 import Plano5W2H from './pages/Plano5W2H';
 import WMSInteligente from './pages/WMSInteligente';
 import { OfflineProvider, useOfflineSync } from './context/OfflineContext';
+import { AccessibilityHub } from './components/AccessibilityHub';
 import { Wifi, WifiOff, RefreshCw, Database, Eye, ChevronRight, Menu, Volume2, VolumeX, ZoomIn, ZoomOut } from 'lucide-react';
 
 // Breadcrumb & Accessibility Component
@@ -244,6 +245,7 @@ const AppLayout: React.FC = () => {
       </div>
 
       <Chatbot />
+      <AccessibilityHub />
     </div>
   );
 };

@@ -385,14 +385,36 @@ const Inventario: React.FC = () => {
     }));
   };
 
+  const [showHelp, setShowHelp] = useState<boolean>(false);
+
   return (
     <div className="inventario-page">
-      <header className="page-header">
+      <header className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1>Gestão de Inventário (FEFO / FIFO)</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <h1>Gestão de Inventário (FIFO / FEFO)</h1>
+            <button 
+              className="btn-card-help" 
+              onClick={() => setShowHelp(!showHelp)} 
+              title="Clique para entender como funciona esta página"
+              style={{ background: 'var(--primary-light)', padding: '0.35rem 0.65rem', borderRadius: '9999px', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.775rem', fontWeight: 700, color: 'var(--primary-color)' }}
+            >
+              <span>? Como funciona o Inventário</span>
+            </button>
+          </div>
           <p>Rastreabilidade de validade de insumos, curva ABC, giro e reconciliação física</p>
         </div>
       </header>
+
+      {showHelp && (
+        <div className="card card-help-popover-wide" style={{ marginBottom: '1.5rem', background: '#0f172a', color: '#fff' }}>
+          <h4>? O QUE É E COMO FUNCIONA O INVENTÁRIO (FEFO / FIFO):</h4>
+          <p style={{ marginTop: '0.35rem', fontSize: '0.825rem', lineHeight: '1.4' }}>
+            <strong>O QUE É:</strong> O controle de estoque ordenado por data de vencimento e curva de custo de insumos.<br />
+            <strong>COMO FUNCIONA:</strong> O sistema aplica o algoritmo FEFO (Primeiro que Vence, Primeiro que Sai) para baixar lotes prestes a vencer, além de permitir auditoria física para conferir se o peso no saco bate com a contagem do sistema.
+          </p>
+        </div>
+      )}
 
       {banner && (
         <div className={`message-banner card ${banner.type}`}>

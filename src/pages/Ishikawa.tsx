@@ -165,14 +165,36 @@ const Ishikawa: React.FC = () => {
     navigate('/5w2h');
   };
 
+  const [showHelp, setShowHelp] = useState<boolean>(false);
+
   return (
     <div className="ishikawa-page">
-      <header className="page-header">
+      <header className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1>Diagrama de Ishikawa (Espinha de Peixe)</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <h1>Diagrama de Ishikawa (Espinha de Peixe)</h1>
+            <button 
+              className="btn-card-help" 
+              onClick={() => setShowHelp(!showHelp)} 
+              title="Clique para entender como funciona esta página"
+              style={{ background: 'var(--primary-light)', padding: '0.35rem 0.65rem', borderRadius: '9999px', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.775rem', fontWeight: 700, color: 'var(--primary-color)' }}
+            >
+              <span>? Como funciona o Ishikawa</span>
+            </button>
+          </div>
           <p>Mapeamento de causas raiz para perdas, avarias e desvios operacionais de estoque</p>
         </div>
       </header>
+
+      {showHelp && (
+        <div className="card card-help-popover-wide" style={{ marginBottom: '1.5rem', background: '#0f172a', color: '#fff' }}>
+          <h4>? O QUE É E COMO FUNCIONA O DIAGRAMA DE ISHIKAWA:</h4>
+          <p style={{ marginTop: '0.35rem', fontSize: '0.825rem', lineHeight: '1.4' }}>
+            <strong>O QUE É:</strong> Uma ferramenta da qualidade usada na fábrica para investigar por que um problema (como sacos rasgados ou fermentos estragados) aconteceu.<br />
+            <strong>COMO FUNCIONA:</strong> Separa os motivos em 6 categorias (Método, Máquina, Medida, Meio Ambiente, Mão de Obra e Material). Clicar no botão da causa cria um Plano de Ação 5W2H para resolver o problema.
+          </p>
+        </div>
+      )}
 
       <div className="ishikawa-container">
         {/* Top controls: Select diagram & Create diagram */}
