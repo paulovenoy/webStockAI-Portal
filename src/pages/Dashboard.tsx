@@ -14,7 +14,13 @@ import {
   WifiOff,
   RefreshCw,
   Database,
-  MinusCircle
+  MinusCircle,
+  Volume2,
+  Sparkles,
+  BookOpen,
+  ChevronDown,
+  ChevronUp,
+  Map
 } from 'lucide-react';
 import { useOfflineSync } from '../context/OfflineContext';
 
@@ -63,6 +69,12 @@ const Dashboard: React.FC = () => {
   
   // Active Help Popover State (Contextual help per card)
   const [activeHelpSection, setActiveHelpSection] = useState<string | null>(null);
+
+  // Toggle Training Guide Visibility
+  const [showTrainingGuide, setShowTrainingGuide] = useState<boolean>(true);
+
+  // Active Speech State for Card Reading
+  const [activeSpeechCard, setActiveSpeechCard] = useState<string | null>(null);
 
   // Stock AI KPIs & Inventory Data
   const [kpis, setKpis] = useState<KPIState>({
@@ -175,6 +187,24 @@ const Dashboard: React.FC = () => {
     loadData();
   }, []);
 
+  // Speech Reader for Cards
+  const speakCardContent = (cardId: string, title: string, content: string) => {
+    if ('speechSynthesis' in window) {
+      if (activeSpeechCard === cardId) {
+        window.speechSynthesis.cancel();
+        setActiveSpeechCard(null);
+      } else {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(`${title}. ${content}`);
+        utterance.lang = 'pt-BR';
+        utterance.onend = () => setActiveSpeechCard(null);
+        utterance.onerror = () => setActiveSpeechCard(null);
+        window.speechSynthesis.speak(utterance);
+        setActiveSpeechCard(cardId);
+      }
+    }
+  };
+
   // Action: Consume Batch (FEFO Baixa)
   const handleConsumeItem = (item: CriticalExpiryItem, qtyToUse: number) => {
     const localInv = localStorage.getItem('@portal-stock-ai:inventory');
@@ -215,7 +245,7 @@ const Dashboard: React.FC = () => {
     });
   };
 
-  // Toggle Help
+  // Toggle Help Popovers
   const toggleHelp = (section: string) => {
     setActiveHelpSection(prev => (prev === section ? null : section));
   };
@@ -269,6 +299,15 @@ const Dashboard: React.FC = () => {
               <Clock size={13} />
               {formattedTimeStr} • {formattedDateStr}
             </span>
+            <button 
+              className="btn-toggle-guide-header"
+              onClick={() => setShowTrainingGuide(!showTrainingGuide)}
+              title="Exibir ou ocultar o manual explicativo do sistema"
+            >
+              <BookOpen size={13} />
+              <span>{showTrainingGuide ? 'Ocultar Explicações' : 'Como Funciona? (Guia de Treinamento)'}</span>
+              {showTrainingGuide ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+            </button>
           </div>
 
           <h1 className="apple-greeting">{getGreeting()}</h1>
@@ -280,6 +319,136 @@ const Dashboard: React.FC = () => {
           <strong className="stage-name">CONTROLE FEFO DE PRODUÇÃO</strong>
         </div>
       </header>
+
+      {/* DEDICATED SYSTEM EXPLANATION CARDS (POR QUE EXISTE E COMO FUNCIONA) */}
+      {showTrainingGuide && (
+        <section className="system-explanation-section" aria-label="Guia Explicativo do Sistema">
+          <div className="section-title-box">
+            <Sparkles size={20} color="#ea580c" />
+            <div>
+              <h3>Guia Didático do Sistema: Por que existe e Como Funciona cada parte?</h3>
+              <p>Card explicativo interativo com áudio para treinamento de funcionários e gestores da fábrica</p>
+            </div>
+          </div>
+
+          <div className="explanation-cards-grid">
+            
+            {/* Card 1: Por que o Stock AI existe? */}
+            <div className="card explanation-card">
+              <div className="exp-card-header">
+                <div className="exp-icon-box orange">
+                  <Sparkles size={18} />
+                </div>
+                <button 
+                  className={`btn-speech-card ${activeSpeechCard === 'exp1' ? 'speaking' : ''}`}
+                  onClick={() => speakCardContent('exp1', 'Por que o Stock AI foi criado?', 'O sistema foi desenvolvido para a Fábrica Três Irmãos eliminar o prejuízo financeiro causado por farinhas e fermentos vencidos ou esquecidos no almoxarifado.')}
+                  title="Ouvir explicação deste card em áudio"
+                >
+                  <Volume2 size={13} />
+                  <span>{activeSpeechCard === 'exp1' ? 'Parar Áudio' : 'Ouvir'}</span>
+                </button>
+              </div>
+              <div className="exp-card-body">
+                <h4>1. Por que o Stock AI foi criado?</h4>
+                <p className="exp-why"><strong>POR QUE:</strong> Na fábrica, farinhas e fermentos vencidos geravam prejuízos financeiros silenciosos por falha na rotação do estoque.</p>
+                <p className="exp-how"><strong>COMO FUNCIONA:</strong> O sistema monitora as validades e quantidades em tempo real, indicando exatamente qual saco de ingrediente deve ir para a batedeira primeiro.</p>
+              </div>
+            </div>
+
+            {/* Card 2: Como funciona o Controle FEFO? */}
+            <div className="card explanation-card">
+              <div className="exp-card-header">
+                <div className="exp-icon-box red">
+                  <Clock size={18} />
+                </div>
+                <button 
+                  className={`btn-speech-card ${activeSpeechCard === 'exp2' ? 'speaking' : ''}`}
+                  onClick={() => speakCardContent('exp2', 'Como funciona o Controle FEFO?', 'FEFO significa Primeiro que Vence, Primeiro que Sai. O sistema ordena os lotes pela data de vencimento e oferece o botão Dar Baixa de 5kg para registrar a retirada rápida do estoque.')}
+                  title="Ouvir explicação deste card em áudio"
+                >
+                  <Volume2 size={13} />
+                  <span>{activeSpeechCard === 'exp2' ? 'Parar Áudio' : 'Ouvir'}</span>
+                </button>
+              </div>
+              <div className="exp-card-body">
+                <h4>2. Como funciona a Regra FEFO?</h4>
+                <p className="exp-why"><strong>POR QUE:</strong> Usar insumos novos deixando lotes antigos vencerem no galpão destrói a margem de lucro.</p>
+                <p className="exp-how"><strong>COMO FUNCIONA:</strong> Significa <em>First Expire, First Out</em> (Primeiro que Vence, Primeiro que Sai). Basta clicar no botão <strong>"Dar Baixa (5kg)"</strong> no lote que está vencendo para retirá-lo da contagem física.</p>
+              </div>
+            </div>
+
+            {/* Card 3: Como ler os KPIs e a Curva ABC? */}
+            <div className="card explanation-card">
+              <div className="exp-card-header">
+                <div className="exp-icon-box green">
+                  <DollarSign size={18} />
+                </div>
+                <button 
+                  className={`btn-speech-card ${activeSpeechCard === 'exp3' ? 'speaking' : ''}`}
+                  onClick={() => speakCardContent('exp3', 'Como ler a Curva ABC e os Indicadores?', 'Os quatro cards do topo mostram o custo em reais estocado e o descarte em quilos. A Curva A representa 80 por cento do investimento financeiro focado em farinhas e fermentos.')}
+                  title="Ouvir explicação deste card em áudio"
+                >
+                  <Volume2 size={13} />
+                  <span>{activeSpeechCard === 'exp3' ? 'Parar Áudio' : 'Ouvir'}</span>
+                </button>
+              </div>
+              <div className="exp-card-body">
+                <h4>3. KPIs e Curva ABC</h4>
+                <p className="exp-why"><strong>POR QUE:</strong> Nem todos os ingredientes têm o mesmo valor. Farinha e fermento custam muito mais que sal ou temperos.</p>
+                <p className="exp-how"><strong>COMO FUNCIONA:</strong> A Curva A agrupa 80% do dinheiro investido no almoxarifado (R$ 5.430,00). Focar na Curva A garante que o maior capital da empresa esteja sempre protegido.</p>
+              </div>
+            </div>
+
+            {/* Card 4: Como funciona o Modo Offline? */}
+            <div className="card explanation-card">
+              <div className="exp-card-header">
+                <div className="exp-icon-box blue">
+                  <WifiOff size={18} />
+                </div>
+                <button 
+                  className={`btn-speech-card ${activeSpeechCard === 'exp4' ? 'speaking' : ''}`}
+                  onClick={() => speakCardContent('exp4', 'Como funciona a Operação Offline?', 'Galpões fabris frequentemente perdem o sinal de internet. O sistema grava as movimentações no próprio celular ou tablet e sincroniza com a nuvem assim que reconectar.')}
+                  title="Ouvir explicação deste card em áudio"
+                >
+                  <Volume2 size={13} />
+                  <span>{activeSpeechCard === 'exp4' ? 'Parar Áudio' : 'Ouvir'}</span>
+                </button>
+              </div>
+              <div className="exp-card-body">
+                <h4>4. Operação Offline Garantida</h4>
+                <p className="exp-why"><strong>POR QUE:</strong> O galpão da fábrica em São Gonçalo pode ter oscilações de sinal de Wi-Fi ou internet móvel.</p>
+                <p className="exp-how"><strong>COMO FUNCIONA:</strong> Você pode dar baixas e cadastrar movimentações normalmente. O sistema guarda na memória do aparelho e exibe o botão <strong>"Sincronizar Agora"</strong> para enviar tudo para a nuvem quando voltar a ter rede.</p>
+              </div>
+            </div>
+
+            {/* Card 5: Guia de Navegação dos Módulos */}
+            <div className="card explanation-card">
+              <div className="exp-card-header">
+                <div className="exp-icon-box purple">
+                  <Map size={18} />
+                </div>
+                <button 
+                  className={`btn-speech-card ${activeSpeechCard === 'exp5' ? 'speaking' : ''}`}
+                  onClick={() => speakCardContent('exp5', 'Guia de Navegação nos Módulos', 'Use o menu lateral para navegar entre Depósito e Layout para ver prateleiras, Central de Compras para solicitar fornecedores, e WMS Inteligente para suporte por inteligência artificial.')}
+                  title="Ouvir explicação deste card em áudio"
+                >
+                  <Volume2 size={13} />
+                  <span>{activeSpeechCard === 'exp5' ? 'Parar Áudio' : 'Ouvir'}</span>
+                </button>
+              </div>
+              <div className="exp-card-body">
+                <h4>5. Guia dos Outros Módulos</h4>
+                <div className="module-mini-list">
+                  <span>🗺️ <strong>Depósito:</strong> Mapeia física de corredores A, B e C.</span>
+                  <span>🛒 <strong>Compras:</strong> Orçamentos automáticos com fornecedores.</span>
+                  <span>🤖 <strong>WMS AI:</strong> Assistente de inteligência artificial para a fábrica.</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+      )}
 
       {/* 4 Stat KPI Cards Row (Original Stock AI metrics in Reference Apple Style) */}
       <section className="stat-cards-grid" aria-label="Indicadores de Estoque">
@@ -295,10 +464,10 @@ const Dashboard: React.FC = () => {
               <button 
                 className="btn-card-help" 
                 onClick={() => toggleHelp('kpi1')} 
-                title="Ajuda sobre Categorias"
+                title="Explicação deste indicador (Clique para ver como funciona)"
                 aria-label="Explicação sobre Categorias"
               >
-                <HelpCircle size={15} />
+                <HelpCircle size={16} />
               </button>
             </div>
           </div>
@@ -313,7 +482,7 @@ const Dashboard: React.FC = () => {
 
           {activeHelpSection === 'kpi1' && (
             <div className="card-help-popover" role="tooltip">
-              <strong>O que significa:</strong> Quantidade de tipos de matérias-primas e insumos (Farinhas, Fermentos, Gorduras, Adoçantes e Condimentos) cadastrados no galpão.
+              <strong>? COMO FUNCIONA:</strong> Mostra os 5 grupos principais de ingredientes cadastrados (Farinhas, Fermentos, Gorduras, Adoçantes e Condimentos) para facilitar a contagem física.
             </div>
           )}
         </div>
@@ -331,10 +500,10 @@ const Dashboard: React.FC = () => {
               <button 
                 className="btn-card-help" 
                 onClick={() => toggleHelp('kpi2')} 
-                title="Ajuda sobre Estoque Baixo"
+                title="Explicação deste indicador (Clique para ver como funciona)"
                 aria-label="Explicação sobre Estoque Baixo"
               >
-                <HelpCircle size={15} />
+                <HelpCircle size={16} />
               </button>
             </div>
           </div>
@@ -349,7 +518,7 @@ const Dashboard: React.FC = () => {
 
           {activeHelpSection === 'kpi2' && (
             <div className="card-help-popover" role="tooltip">
-              <strong>O que significa:</strong> Produtos cujo volume atual no almoxarifado é inferior ao mínimo de segurança necessário para não parar a fábrica.
+              <strong>? COMO FUNCIONA:</strong> O Fermento Biológico Seco está com apenas 18kg no galpão, abaixo da margem de segurança de 30kg. Um pedido de compra automático é acionado.
             </div>
           )}
         </div>
@@ -365,10 +534,10 @@ const Dashboard: React.FC = () => {
               <button 
                 className="btn-card-help" 
                 onClick={() => toggleHelp('kpi3')} 
-                title="Ajuda sobre Custo em Insumos"
+                title="Explicação deste indicador (Clique para ver como funciona)"
                 aria-label="Explicação sobre Custo em Insumos"
               >
-                <HelpCircle size={15} />
+                <HelpCircle size={16} />
               </button>
             </div>
           </div>
@@ -382,7 +551,7 @@ const Dashboard: React.FC = () => {
 
           {activeHelpSection === 'kpi3' && (
             <div className="card-help-popover" role="tooltip">
-              <strong>O que significa:</strong> Multiplicação do custo de aquisição pela quantidade em quilos guardada no depósito da fábrica.
+              <strong>? COMO FUNCIONA:</strong> Representa o capital de giro retido nas prateleiras do depósito. Evita compras desnecessárias e ajuda a diretoria na previsão de caixa.
             </div>
           )}
         </div>
@@ -398,10 +567,10 @@ const Dashboard: React.FC = () => {
               <button 
                 className="btn-card-help" 
                 onClick={() => toggleHelp('kpi4')} 
-                title="Ajuda sobre Perdas & Refugos"
+                title="Explicação deste indicador (Clique para ver como funciona)"
                 aria-label="Explicação sobre Perdas & Refugos"
               >
-                <HelpCircle size={15} />
+                <HelpCircle size={16} />
               </button>
             </div>
           </div>
@@ -415,7 +584,7 @@ const Dashboard: React.FC = () => {
 
           {activeHelpSection === 'kpi4' && (
             <div className="card-help-popover" role="tooltip">
-              <strong>O que significa:</strong> Soma do peso de farinhas e ingrediente descartados por validade ou embalagem avariada.
+              <strong>? COMO FUNCIONA:</strong> Soma do peso de mercadorias descartadas por rasgo em sacaria ou vencimento. Reduzir este número gera economia direta no final do mês.
             </div>
           )}
         </div>
@@ -441,6 +610,7 @@ const Dashboard: React.FC = () => {
               className="btn-card-help" 
               onClick={() => toggleHelp('fefo')}
               aria-label="Ajuda sobre Controle FEFO"
+              title="Clique para entender como funciona o quadro FEFO"
             >
               <HelpCircle size={16} />
             </button>
@@ -448,7 +618,7 @@ const Dashboard: React.FC = () => {
 
           {activeHelpSection === 'fefo' && (
             <div className="card-help-popover-wide">
-              <strong>Entenda o FEFO (First Expire, First Out):</strong> Os produtos prestes a vencer são exibidos prioritariamente para uso na receita, evitando perdas financeiras por validade vencida.
+              <strong>? COMO FUNCIONA O QUADRO FEFO:</strong> Os lotes que vão vencer nos próximos dias aparecem no topo com a margem em dias. Ao clicar em <strong>"Dar Baixa (5kg)"</strong>, a retirada é computada no saldo físico para que os padeiros usem este lote na batedeira primeiro.
             </div>
           )}
 
@@ -508,15 +678,31 @@ const Dashboard: React.FC = () => {
               <h3>Fluxo de Controle & Etapas da Fábrica</h3>
               <p className="card-subtitle">Estágios da linha de produção na Fábrica Três Irmãos</p>
             </div>
-            <button 
-              className="btn-advance-phase" 
-              onClick={handleAdvancePhase}
-              title="Avançar para a próxima etapa do fluxo fabril"
-            >
-              Avançar Etapa
-              <ChevronRight size={14} />
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <button 
+                className="btn-advance-phase" 
+                onClick={handleAdvancePhase}
+                title="Avançar para a próxima etapa do fluxo fabril"
+              >
+                Avançar Etapa
+                <ChevronRight size={14} />
+              </button>
+              <button 
+                className="btn-card-help" 
+                onClick={() => toggleHelp('workflow')}
+                aria-label="Ajuda sobre Fluxo de Controle"
+                title="Clique para entender o fluxo de controle"
+              >
+                <HelpCircle size={16} />
+              </button>
+            </div>
           </div>
+
+          {activeHelpSection === 'workflow' && (
+            <div className="card-help-popover-wide">
+              <strong>? COMO FUNCIONA O FLUXO DE ETAPAS:</strong> O processo segue cinco passos fundamentais desde a chegada do caminhão do fornecedor até o fechamento financeiro do mês.
+            </div>
+          )}
 
           <div className="phases-stepper-list">
             {phases.map((phase) => (
@@ -549,14 +735,14 @@ const Dashboard: React.FC = () => {
                 <h3>Histórico de Perdas (kg)</h3>
                 <p className="card-subtitle">Evolução do descarte acumulado em kg por semana</p>
               </div>
-              <button className="btn-card-help" onClick={() => toggleHelp('chart1')} aria-label="Ajuda sobre Histórico de Perdas">
-                <HelpCircle size={15} />
+              <button className="btn-card-help" onClick={() => toggleHelp('chart1')} aria-label="Ajuda sobre Histórico de Perdas" title="Clique para entender o gráfico de perdas">
+                <HelpCircle size={16} />
               </button>
             </div>
 
             {activeHelpSection === 'chart1' && (
               <div className="card-help-popover">
-                <strong>O que significa:</strong> Quantidade em kg descarte por semana. A meta é permanecer abaixo de 20 kg/semana.
+                <strong>? COMO FUNCIONA O GRÁFICO:</strong> Mostra o descarte em quilos por semana. A linha pontilhada indica o limite máximo de segurança de 20kg por semana.
               </div>
             )}
 
@@ -625,14 +811,14 @@ const Dashboard: React.FC = () => {
                 <h3>Classificação Curva ABC</h3>
                 <p className="card-subtitle">Distribuição por valor de custo e giro</p>
               </div>
-              <button className="btn-card-help" onClick={() => toggleHelp('abc')} aria-label="Ajuda sobre Curva ABC">
-                <HelpCircle size={15} />
+              <button className="btn-card-help" onClick={() => toggleHelp('abc')} aria-label="Ajuda sobre Curva ABC" title="Clique para entender a Curva ABC">
+                <HelpCircle size={16} />
               </button>
             </div>
 
             {activeHelpSection === 'abc' && (
               <div className="card-help-popover">
-                <strong>Curva A:</strong> Insumos de altíssimo valor (Farinhas e Fermentos) que demandam atenção rigorosa.
+                <strong>? COMO FUNCIONA A CURVA ABC:</strong> Separa os insumos por prioridade financeira. Curva A (vermelho) responde por 80% dos custos da fábrica.
               </div>
             )}
 
@@ -672,11 +858,22 @@ const Dashboard: React.FC = () => {
             </h3>
             <p>Diagnóstico de inventário e custos mensais de fornecedores em São Gonçalo</p>
           </div>
-          <a href="/inventario" className="action-link-footer">
-            Ver Detalhes do Inventário
-            <ArrowUpRight size={14} />
-          </a>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <button className="btn-card-help" onClick={() => toggleHelp('footer')} aria-label="Ajuda sobre o Relatório Rápido" title="Clique para entender o relatório">
+              <HelpCircle size={16} />
+            </button>
+            <a href="/inventario" className="action-link-footer">
+              Ver Detalhes do Inventário
+              <ArrowUpRight size={14} />
+            </a>
+          </div>
         </div>
+
+        {activeHelpSection === 'footer' && (
+          <div className="card-help-popover-wide" style={{ marginBottom: '1.25rem' }}>
+            <strong>? COMO FUNCIONA O DIAGNÓSTICO:</strong> Exibe a taxa de divergência na pesagem física (meta menor que 1.0%), o custo total de reposição mensal e o dinheiro poupado ao evitar perdas por vencimento.
+          </div>
+        )}
 
         <div className="report-metrics-grid">
           <div className="report-metric-item">

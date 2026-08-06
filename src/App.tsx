@@ -11,14 +11,15 @@ import Ishikawa from './pages/Ishikawa';
 import Plano5W2H from './pages/Plano5W2H';
 import WMSInteligente from './pages/WMSInteligente';
 import { OfflineProvider, useOfflineSync } from './context/OfflineContext';
-import { Wifi, WifiOff, RefreshCw, Database, Eye, ChevronRight, Menu } from 'lucide-react';
+import { Wifi, WifiOff, RefreshCw, Database, Eye, ChevronRight, Menu, Volume2, VolumeX, ZoomIn, ZoomOut } from 'lucide-react';
 
 // Breadcrumb & Accessibility Component
 const TopNavigationHeader: React.FC<{ 
   onToggleHighContrast: () => void; 
   isHighContrast: boolean;
   onToggleMobileSidebar: () => void;
-}> = ({ onToggleHighContrast, isHighContrast, onToggleMobileSidebar }) => {
+  onChangeFontScale: (delta: number) => void;
+}> = ({ onToggleHighContrast, isHighContrast, onToggleMobileSidebar, onChangeFontScale }) => {
   const { 
     effectiveOnline, 
     isSimulatedOffline, 
@@ -28,6 +29,8 @@ const TopNavigationHeader: React.FC<{
     toggleSimulatedOffline 
   } = useOfflineSync();
   const location = useLocation();
+
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const getBreadcrumbInfo = (path: string) => {
     switch (path) {
@@ -44,6 +47,26 @@ const TopNavigationHeader: React.FC<{
   };
 
   const breadcrumb = getBreadcrumbInfo(location.pathname);
+
+  // Audio Reader (Speech Synthesis for Accessibility)
+  const toggleSpeechReader = () => {
+    if ('speechSynthesis' in window) {
+      if (isSpeaking) {
+        window.speechSynthesis.cancel();
+        setIsSpeaking(false);
+      } else {
+        const textToRead = "Você está no aplicativo Stock AI, Portal da Empresa Fábrica Três Irmãos em São Gonçalo. Esta ferramenta permite controlar o estoque de insumos, validade de farinhas e fermentos pelo método FEFO e opera mesmo sem conexão de internet.";
+        const utterance = new SpeechSynthesisUtterance(textToRead);
+        utterance.lang = 'pt-BR';
+        utterance.onend = () => setIsSpeaking(false);
+        utterance.onerror = () => setIsSpeaking(false);
+        window.speechSynthesis.speak(utterance);
+        setIsSpeaking(true);
+      }
+    } else {
+      alert("Seu navegador não suporta a leitura por voz de acessibilidade.");
+    }
+  };
 
   return (
     <header className="app-top-navbar" role="banner">
@@ -73,15 +96,49 @@ const TopNavigationHeader: React.FC<{
       {/* Right side: Accessibility Controls & System Status */}
       <div className="top-navbar-right">
         {/* Accessibility Toolbar */}
-        <div className="accessibility-toolbar" role="region" aria-label="Controles de Acessibilidade">
+        <div className="accessibility-toolbar" role="region" aria-label="Painel de Acessibilidade">
+          
+          {/* Audio Reader */}
+          <button 
+            className={`btn-access-toggle ${isSpeaking ? 'active' : ''}`}
+            onClick={toggleSpeechReader}
+            title="Ouvir resumo em áudio sobre esta página (Leitor por Voz)"
+            aria-label="Ouvir Resumo por Voz"
+          >
+            {isSpeaking ? <VolumeX size={14} /> : <Volume2 size={14} />}
+            <span className="access-label">{isSpeaking ? 'Parar Voz' : 'Ouvir Áudio'}</span>
+          </button>
+
+          {/* Font Resizing */}
+          <button 
+            className="btn-access-toggle"
+            onClick={() => onChangeFontScale(0.1)}
+            title="Aumentar tamanho do texto"
+            aria-label="Aumentar Fonte"
+          >
+            <ZoomIn size={14} />
+            <span className="access-label">A+</span>
+          </button>
+
+          <button 
+            className="btn-access-toggle"
+            onClick={() => onChangeFontScale(-0.1)}
+            title="Diminuir tamanho do texto"
+            aria-label="Diminuir Fonte"
+          >
+            <ZoomOut size={14} />
+            <span className="access-label">A-</span>
+          </button>
+
+          {/* High Contrast */}
           <button 
             className={`btn-access-toggle ${isHighContrast ? 'active' : ''}`}
             onClick={onToggleHighContrast}
-            title="Alternar Modo Alto Contraste para melhor legibilidade"
+            title="Alternar Modo Alto Contraste para melhor visibilidade"
             aria-label="Alto Contraste"
           >
             <Eye size={14} />
-            <span className="access-label">Contraste</span>
+            <span className="access-label">Alto Contraste</span>
           </button>
         </div>
 
@@ -128,6 +185,7 @@ const TopNavigationHeader: React.FC<{
 const AppLayout: React.FC = () => {
   const [isHighContrast, setIsHighContrast] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [fontScale, setFontScale] = useState(1);
 
   const toggleHighContrast = () => {
     setIsHighContrast(prev => !prev);
@@ -141,6 +199,10 @@ const AppLayout: React.FC = () => {
     setIsMobileSidebarOpen(false);
   };
 
+  const changeFontScale = (delta: number) => {
+    setFontScale(prev => Math.min(1.3, Math.max(0.9, prev + delta)));
+  };
+
   useEffect(() => {
     if (isHighContrast) {
       document.body.classList.add('high-contrast');
@@ -149,12 +211,17 @@ const AppLayout: React.FC = () => {
     }
   }, [isHighContrast]);
 
+  useEffect(() => {
+    document.documentElement.style.fontSize = `${fontScale * 100}%`;
+  }, [fontScale]);
+
   return (
     <div className={`app-container ${isHighContrast ? 'contrast-mode' : ''}`}>
       <TopNavigationHeader 
         onToggleHighContrast={toggleHighContrast} 
         isHighContrast={isHighContrast}
         onToggleMobileSidebar={toggleMobileSidebar}
+        onChangeFontScale={changeFontScale}
       />
 
       {/* Backdrop overlay for mobile menu */}
