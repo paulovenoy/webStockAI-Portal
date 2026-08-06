@@ -2,70 +2,114 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, 
-  Map, 
-  Package, 
-  ShoppingCart, 
-  Settings, 
+  Truck, 
+  TrendingUp, 
+  CheckSquare, 
+  FileText, 
+  Users, 
+  UserCheck, 
+  Bot, 
+  Sparkles,
+  LogOut,
   MapPin,
-  GitBranch,
-  ClipboardList,
-  Layers
+  ChevronLeft
 } from 'lucide-react';
 
 const Sidebar: React.FC = () => {
-  const menuItems = [
-    { name: 'Painel Geral', path: '/', icon: <LayoutDashboard size={20} /> },
-    { name: 'Depósito & Layout', path: '/deposito', icon: <Map size={20} /> },
-    { name: 'Inventário (FIFO/FEFO)', path: '/inventario', icon: <Package size={20} /> },
-    { name: 'Central de Compras', path: '/compras', icon: <ShoppingCart size={20} /> },
-    { name: 'Área do Gestor', path: '/gestor', icon: <Settings size={20} /> },
-    { name: 'Diagrama Ishikawa', path: '/ishikawa', icon: <GitBranch size={20} /> },
-    { name: 'Plano 5W2H', path: '/5w2h', icon: <ClipboardList size={20} /> },
-    { name: 'WMS Inteligente', path: '/wms', icon: <Layers size={20} /> }
+  const navigationGroups = [
+    {
+      title: 'VISÃO GERAL',
+      items: [
+        { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={18} /> },
+        { name: 'Central de Entregas', path: '/deposito', icon: <Truck size={18} /> }
+      ]
+    },
+    {
+      title: 'GESTÃO & OPERAÇÕES',
+      items: [
+        { name: 'A Demanda', path: '/inventario', icon: <TrendingUp size={18} /> },
+        { name: 'Tarefas (FEFO/FIFO)', path: '/compras', icon: <CheckSquare size={18} /> },
+        { name: 'Anotações & 5W2H', path: '/5w2h', icon: <FileText size={18} /> }
+      ]
+    },
+    {
+      title: 'RELACIONAMENTO',
+      items: [
+        { name: 'Clientes & Fornecedores', path: '/gestor', icon: <Users size={18} /> },
+        { name: 'Membros da Equipe', path: '/ishikawa', icon: <UserCheck size={18} /> }
+      ]
+    },
+    {
+      title: 'FERRAMENTAS',
+      items: [
+        { name: 'Oliver AI', path: '/wms', icon: <Bot size={18} />, badge: 'AI' },
+        { name: 'Recursos AI Unit', path: '/wms', icon: <Sparkles size={18} /> }
+      ]
+    }
   ];
 
   return (
-    <aside className="sidebar">
+    <aside className="sidebar reference-style-sidebar" role="navigation" aria-label="Navegação Principal">
+      {/* Sidebar Header */}
       <div className="sidebar-header">
-        <div className="logo" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div className="logo-brand">
           <img 
             src="/logo.png" 
             alt="StockAI Icon" 
-            style={{ height: '40px', width: 'auto', borderRadius: '8px', objectFit: 'contain' }} 
+            className="brand-logo-img" 
           />
           <div>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: 800 }}>StockAI</h2>
-            <p style={{ fontSize: '0.75rem', opacity: 0.9 }}>Portal da Empresa</p>
+            <h2>Stock AI</h2>
+            <span>GESTÃO INTELIGENTE</span>
           </div>
         </div>
+        <button className="btn-collapse-sidebar" aria-label="Recolher Menu">
+          <ChevronLeft size={16} />
+        </button>
       </div>
 
-      <nav className="sidebar-nav">
-        {menuItems.map((item) => (
-          <NavLink
-            key={item.name}
-            to={item.path}
-            className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
-          >
-            {item.icon}
-            <span>{item.name}</span>
-          </NavLink>
-        ))}
-      </nav>
-
-      <div className="sidebar-footer">
-        <div className="location-card">
-          <div className="location-icon">
-            <MapPin size={18} />
+      {/* Navigation Links Grouped */}
+      <div className="sidebar-scroll-area">
+        {navigationGroups.map((group, gIdx) => (
+          <div key={gIdx} className="nav-group">
+            <h4 className="nav-group-title">{group.title}</h4>
+            <nav className="nav-list">
+              {group.items.map((item) => (
+                <NavLink
+                  key={item.name}
+                  to={item.path}
+                  className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
+                >
+                  <span className="nav-icon">{item.icon}</span>
+                  <span className="nav-label">{item.name}</span>
+                  {item.badge && <span className="nav-ai-badge">{item.badge}</span>}
+                </NavLink>
+              ))}
+            </nav>
           </div>
-          <div className="location-info">
-            <strong>Fábrica Três Irmãos</strong>
-            <span>Jardim Catarina, SG</span>
+        ))}
+      </div>
+
+      {/* Footer User Profile Card */}
+      <div className="sidebar-footer-profile">
+        <div className="user-profile-card">
+          <div className="user-avatar">
+            <span>P</span>
+          </div>
+          <div className="user-details">
+            <strong>Paulo Gestor</strong>
+            <span className="user-email">paulovimeny@gmail.com</span>
           </div>
         </div>
-        <div className="status-indicator-bar">
-          <span className="pulse-green"></span>
-          <span>Monitoramento Ativo</span>
+        <div className="profile-actions">
+          <div className="location-mini-pill" title="Fábrica Três Irmãos • São Gonçalo">
+            <MapPin size={12} />
+            <span>São Gonçalo, RJ</span>
+          </div>
+          <button className="btn-logout" title="Encerrar Sessão">
+            <LogOut size={14} />
+            <span>Sair</span>
+          </button>
         </div>
       </div>
     </aside>

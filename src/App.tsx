@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Chatbot from './components/Chatbot';
 import Dashboard from './pages/Dashboard';
@@ -11,10 +11,10 @@ import Ishikawa from './pages/Ishikawa';
 import Plano5W2H from './pages/Plano5W2H';
 import WMSInteligente from './pages/WMSInteligente';
 import { OfflineProvider, useOfflineSync } from './context/OfflineContext';
-import { Wifi, WifiOff, RefreshCw, Database } from 'lucide-react';
+import { Wifi, WifiOff, RefreshCw, Database, Eye, ChevronRight, Menu } from 'lucide-react';
 
-// Header Status Component
-const HeaderNetworkStatus: React.FC = () => {
+// Breadcrumb & Accessibility Component
+const TopNavigationHeader: React.FC<{ onToggleHighContrast: () => void; isHighContrast: boolean }> = ({ onToggleHighContrast, isHighContrast }) => {
   const { 
     effectiveOnline, 
     isSimulatedOffline, 
@@ -23,24 +23,74 @@ const HeaderNetworkStatus: React.FC = () => {
     syncWithCloud, 
     toggleSimulatedOffline 
   } = useOfflineSync();
+  const location = useLocation();
+
+  const getPageTitle = (path: string) => {
+    switch (path) {
+      case '/': return 'Dashboard';
+      case '/deposito': return 'Depósito & Layout';
+      case '/inventario': return 'Inventário (FIFO/FEFO)';
+      case '/compras': return 'Central de Compras';
+      case '/gestor': return 'Área do Gestor';
+      case '/ishikawa': return 'Diagrama Ishikawa';
+      case '/5w2h': return 'Plano 5W2H';
+      case '/wms': return 'WMS Inteligente';
+      default: return 'Dashboard';
+    }
+  };
 
   return (
-    <div className="network-status-bar">
-      <div className="network-pill-group">
+    <header className="app-top-navbar" role="banner">
+      {/* Left side: Menu toggle & Breadcrumbs */}
+      <div className="top-navbar-left">
+        <button className="btn-menu-mobile" aria-label="Abrir Menu Lateral">
+          <Menu size={18} />
+          <span>Menu</span>
+        </button>
+        
+        <div className="brand-logo-mini">
+          <img src="/logo.png" alt="StockAI Logo" height="24" style={{ borderRadius: '4px' }} />
+          <strong>Stock AI</strong>
+        </div>
+
+        <nav className="breadcrumbs-nav" aria-label="Caminho da Página (Breadcrumbs)">
+          <span>Visão Geral</span>
+          <ChevronRight size={14} className="breadcrumb-separator" />
+          <span className="current-page">{getPageTitle(location.pathname)}</span>
+        </nav>
+      </div>
+
+      {/* Right side: Accessibility Controls & System Status */}
+      <div className="top-navbar-right">
+        {/* Accessibility Toolbar */}
+        <div className="accessibility-toolbar" role="region" aria-label="Controles de Acessibilidade">
+          <button 
+            className={`btn-access-toggle ${isHighContrast ? 'active' : ''}`}
+            onClick={onToggleHighContrast}
+            title="Alternar Modo Alto Contraste para melhor legibilidade"
+            aria-label="Alto Contraste"
+          >
+            <Eye size={14} />
+            <span>Contraste</span>
+          </button>
+        </div>
+
+        {/* Network & Offline Status */}
         <button 
           className={`network-status-pill ${effectiveOnline ? 'online' : 'offline'}`}
           onClick={toggleSimulatedOffline}
-          title="Clique para alternar entre simulação Online / Offline"
+          title="Clique para alternar simulação Online / Offline"
+          aria-label={effectiveOnline ? "Status: Online • Nuvem Ativa" : "Status: Offline (Simulado)"}
         >
           <span className="status-dot"></span>
           {effectiveOnline ? (
             <>
-              <Wifi size={14} />
-              <span>Online • Nuvem Ativa</span>
+              <Wifi size={13} />
+              <span>Sistema Ativo</span>
             </>
           ) : (
             <>
-              <WifiOff size={14} />
+              <WifiOff size={13} />
               <span>{isSimulatedOffline ? 'Offline (Simulado)' : 'Sem Conexão'}</span>
             </>
           )}
@@ -51,46 +101,47 @@ const HeaderNetworkStatus: React.FC = () => {
             className="pending-queue-badge"
             onClick={syncWithCloud}
             disabled={isSyncing}
-            title="Clique para enviar os dados salvos localmente para a nuvem"
+            title="Enviar alterações salvas no dispositivo para a nuvem"
+            aria-label={`${pendingQueue.length} alterações pendentes para sincronizar`}
           >
             <Database size={13} />
-            <span>{pendingQueue.length} {pendingQueue.length === 1 ? 'pendência local' : 'pendências locais'}</span>
+            <span>{pendingQueue.length} {pendingQueue.length === 1 ? 'pendência' : 'pendências'}</span>
             <RefreshCw size={12} className={isSyncing ? 'spinning' : ''} />
           </button>
         )}
       </div>
-    </div>
+    </header>
   );
 };
 
 // Layout Wrapper Component
 const AppLayout: React.FC = () => {
+  const [isHighContrast, setIsHighContrast] = useState(false);
+
+  const toggleHighContrast = () => {
+    setIsHighContrast(prev => !prev);
+  };
+
+  useEffect(() => {
+    if (isHighContrast) {
+      document.body.classList.add('high-contrast');
+    } else {
+      document.body.classList.remove('high-contrast');
+    }
+  }, [isHighContrast]);
+
   return (
-    <div className="app-container">
-      <header className="app-header">
-        <div className="header-left">
-          <div className="header-logo" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <img 
-              src="/logo.png" 
-              alt="StockAI Icon" 
-              style={{ height: '34px', width: 'auto', borderRadius: '6px', objectFit: 'contain' }} 
-            />
-            <span style={{ fontWeight: 800, color: 'var(--primary-color)', fontSize: '1.25rem', letterSpacing: '-0.5px' }}>
-              StockAI - Portal da Empresa
-            </span>
-          </div>
-        </div>
-        <div className="header-right">
-          <HeaderNetworkStatus />
-          <span className="header-badge">Fábrica Três Irmãos</span>
-        </div>
-      </header>
+    <div className={`app-container ${isHighContrast ? 'contrast-mode' : ''}`}>
+      <TopNavigationHeader 
+        onToggleHighContrast={toggleHighContrast} 
+        isHighContrast={isHighContrast} 
+      />
 
       <div className="app-body">
         <div className="sidebar-wrapper">
           <Sidebar />
         </div>
-        <main className="main-content">
+        <main className="main-content" role="main" id="main-content">
           <Outlet />
         </main>
       </div>
@@ -122,4 +173,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-

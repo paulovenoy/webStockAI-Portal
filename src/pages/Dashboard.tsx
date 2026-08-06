@@ -1,274 +1,118 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Package, 
-  AlertTriangle, 
-  DollarSign, 
-  TrendingUp, 
-  Clock, 
   CheckCircle2, 
-  Bell, 
-  ArrowUpRight, 
-  Download,
+  Users, 
+  MessageSquare, 
+  ShieldCheck, 
+  Clock, 
+  MapPin, 
+  ChevronRight, 
+  HelpCircle, 
+  TrendingUp, 
+  ArrowUpRight,
   Wifi,
   WifiOff,
   RefreshCw,
-  HelpCircle,
-  ChevronDown,
-  ChevronUp,
-  Database,
-  MinusCircle,
-  Sparkles,
-  Info
+  Database
 } from 'lucide-react';
 import { useOfflineSync } from '../context/OfflineContext';
 
-interface KPIState {
-  totalItems: number;
-  lowStockCount: number;
-  totalValue: number;
-  wasteTotal: number;
-}
-
-interface InventoryItem {
+interface Phase {
   id: number;
   name: string;
-  category: string;
-  quantity: number;
-  unit: string;
-  minQty: number;
-  address: string;
-  price: number;
-  expiry: string;
-  entryDate: string;
-}
-
-interface NotificationItem {
-  id: number;
-  type: 'warning' | 'info' | 'success' | 'danger';
-  text: string;
-  time: string;
-  isOffline?: boolean;
-}
-
-interface WasteItem {
-  id: number;
-  week: string;
-  losses: number;
-}
-
-interface CriticalExpiryItem extends InventoryItem {
-  daysLeft: number;
+  status: 'done' | 'active' | 'pending';
+  desc: string;
 }
 
 const Dashboard: React.FC = () => {
-  const { 
-    effectiveOnline, 
-    pendingQueue, 
-    isSyncing, 
-    syncWithCloud, 
-    enqueueOfflineAction, 
-    toggleSimulatedOffline 
-  } = useOfflineSync();
+  const { effectiveOnline, pendingQueue, isSyncing, syncWithCloud, enqueueOfflineAction, toggleSimulatedOffline } = useOfflineSync();
 
-  const [kpis, setKpis] = useState<KPIState>({
-    totalItems: 0,
-    lowStockCount: 0,
-    totalValue: 0,
-    wasteTotal: 0
-  });
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [waste, setWaste] = useState<WasteItem[]>([]);
-  const [criticalExpiry, setCriticalExpiry] = useState<CriticalExpiryItem[]>([]);
-  const [isExporting, setIsExporting] = useState(false);
-  const [exportMessage, setExportMessage] = useState<{ text: string; isOffline?: boolean } | null>(null);
-  const [showHelp, setShowHelp] = useState(false);
-  const [activeTab, setActiveTab] = useState<'alerts' | 'queue'>('alerts');
-  const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
+  // Clock State
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  
+  // Active Help Panel States (Contextual Help Modals for each section)
+  const [activeHelpSection, setActiveHelpSection] = useState<string | null>(null);
 
-  // Load and recalculate inventory and KPIs
-  const loadData = () => {
-    // 1. Fetch or initialize inventory
-    const localInv = localStorage.getItem('@portal-stock-ai:inventory');
-    let invData: InventoryItem[] = [];
-    if (localInv) {
-      invData = JSON.parse(localInv);
-    } else {
-      invData = [
-        { id: 1, name: 'Farinha de Trigo Especial', category: 'Farinhas', quantity: 450, unit: 'kg', minQty: 150, address: 'Corredor A - A1', price: 4.5, expiry: '2026-08-30', entryDate: '2026-07-01' },
-        { id: 2, name: 'Açúcar Refinado', category: 'Adoçantes', quantity: 120, unit: 'kg', minQty: 100, address: 'Corredor A - A2', price: 3.5, expiry: '2026-09-15', entryDate: '2026-07-03' },
-        { id: 3, name: 'Fermento Biológico Seco', category: 'Fermentos', quantity: 18, unit: 'kg', minQty: 30, address: 'Corredor B - B1', price: 18, expiry: '2026-08-10', entryDate: '2026-06-25' },
-        { id: 4, name: 'Manteiga sem Sal', category: 'Gorduras', quantity: 85, unit: 'kg', minQty: 40, address: 'Corredor B - B2', price: 26.5, expiry: '2026-08-08', entryDate: '2026-06-20' },
-        { id: 5, name: 'Sal Refinado', category: 'Condimentos', quantity: 95, unit: 'kg', minQty: 25, address: 'Corredor C - C1', price: 2.1, expiry: '2026-10-30', entryDate: '2026-07-05' }
-      ];
-      localStorage.setItem('@portal-stock-ai:inventory', JSON.stringify(invData));
-    }
+  // Phases of Project Implementation (matching reference image)
+  const [phases, setPhases] = useState<Phase[]>([
+    { id: 1, name: 'PLANEJAMENTO', status: 'done', desc: 'Mapeamento de processos e infraestrutura da fábrica concluídos.' },
+    { id: 2, name: 'REQUISITOS', status: 'done', desc: 'Levantamento das demandas de insumos, FIFO/FEFO e fornecedores.' },
+    { id: 3, name: 'DESENVOLVIMENTO', status: 'active', desc: 'Implantação dos módulos digitais de WMS e controle offline no galpão.' },
+    { id: 4, name: 'HOMOLOGAÇÃO', status: 'pending', desc: 'Testes de estresse com a equipe da Fábrica Três Irmãos.' },
+    { id: 5, name: 'IMPLANTAÇÃO', status: 'pending', desc: 'Go-live definitivo do sistema de gestão fabril.' }
+  ]);
 
-    // 2. Fetch or initialize notifications
-    const localNotif = localStorage.getItem('@portal-stock-ai:notifications');
-    let notifData: NotificationItem[] = [];
-    if (localNotif) {
-      notifData = JSON.parse(localNotif);
-    } else {
-      notifData = [
-        { id: 1, type: 'warning', text: 'Produção consumiu 20kg de Fermento Seco. Estoque abaixo do mínimo!', time: '10:42' },
-        { id: 2, type: 'info', text: 'FEFO: Lote de Manteiga com validade mais próxima foi retirado prioritariamente.', time: '09:15' },
-        { id: 3, type: 'success', text: 'Compra rápida recebida: +100kg de Farinha Especial alocados no Corredor A - A1.', time: 'Ontem' }
-      ];
-      localStorage.setItem('@portal-stock-ai:notifications', JSON.stringify(notifData));
-    }
-    setNotifications(notifData);
-
-    // 3. Fetch or initialize waste
-    const localWaste = localStorage.getItem('@portal-stock-ai:waste');
-    let wasteData: WasteItem[] = [];
-    if (localWaste) {
-      wasteData = JSON.parse(localWaste);
-    } else {
-      wasteData = [
-        { id: 1, week: 'Sem 1', losses: 15 },
-        { id: 2, week: 'Sem 2', losses: 24 },
-        { id: 3, week: 'Sem 3', losses: 12 },
-        { id: 4, week: 'Sem 4', losses: 35 },
-        { id: 5, week: 'Sem 5 (Atual)', losses: 8 }
-      ];
-      localStorage.setItem('@portal-stock-ai:waste', JSON.stringify(wasteData));
-    }
-    setWaste(wasteData);
-
-    // 4. Calculate critical expiries (expiry within 10 days)
-    const today = new Date();
-    const critExpiry: CriticalExpiryItem[] = invData
-      .filter(item => {
-        const diffTime = new Date(item.expiry).getTime() - today.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays <= 10;
-      })
-      .map(item => {
-        const diffTime = new Date(item.expiry).getTime() - today.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return { ...item, daysLeft: diffDays };
-      })
-      .sort((a, b) => a.daysLeft - b.daysLeft);
-    setCriticalExpiry(critExpiry);
-
-    // 5. Calculate KPIs
-    const uniqueItemsCount = [...new Set(invData.map(item => item.name))].length;
-    const aggregated = invData.reduce((acc: Record<string, { qty: number; minQty: number }>, item) => {
-      if (!acc[item.name]) {
-        acc[item.name] = { qty: 0, minQty: item.minQty };
-      }
-      acc[item.name].qty += item.quantity;
-      return acc;
-    }, {});
-    const lowStock = Object.values(aggregated).filter(item => item.qty < item.minQty).length;
-    const totalCost = invData.reduce((sum, item) => sum + item.quantity * item.price, 0);
-    const wasteTotal = wasteData.reduce((sum, w) => sum + w.losses, 0);
-
-    setKpis({
-      totalItems: uniqueItemsCount,
-      lowStockCount: lowStock,
-      totalValue: totalCost,
-      wasteTotal: wasteTotal
-    });
-  };
-
+  // Live Clock Ticker
   useEffect(() => {
-    loadData();
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
   }, []);
 
-  // Handle Export Action
-  const handleExport = () => {
-    setIsExporting(true);
-    setExportMessage(null);
-    setTimeout(() => {
-      setIsExporting(false);
-      const isOff = !effectiveOnline;
-      if (isOff) {
-        enqueueOfflineAction('EXPORT_REPORT', 'Geração de relatório consolidado (Fechamento CSV)');
-      }
-      setExportMessage({
-        text: isOff
-          ? 'Relatório solicitado Offline! O arquivo foi gerado localmente e a sincronização com a nuvem ocorrerá assim que reconectar.'
-          : 'Relatório consolidado exportado com sucesso! Arquivo "FECHAMENTO_ESTOQUE_STOCK_AI.csv" sincronizado na nuvem.',
-        isOffline: isOff
-      });
-    }, 1000);
+  // Time of Day Greeting
+  const getGreeting = () => {
+    const hour = currentTime.getHours();
+    if (hour < 12) return 'Bom dia, Gestor 👋🏻';
+    if (hour < 18) return 'Boa tarde, Gestor 👋🏻';
+    return 'Boa noite, Gestor 👋🏻';
   };
 
-  // Consume / Use Batch Action (Demonstrating Offline Writes)
-  const handleConsumeItem = (item: CriticalExpiryItem, qtyToUse: number) => {
-    const localInv = localStorage.getItem('@portal-stock-ai:inventory');
-    if (!localInv) return;
-    let invData: InventoryItem[] = JSON.parse(localInv);
+  // Formatted Date & Time String (Apple Style)
+  const formattedTimeStr = currentTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const formattedDateStr = currentTime.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
-    const updated = invData.map(i => {
-      if (i.id === item.id) {
-        const newQty = Math.max(0, i.quantity - qtyToUse);
-        return { ...i, quantity: newQty };
+  // Advance Phase Action
+  const handleAdvancePhase = () => {
+    setPhases(prevPhases => {
+      const activeIdx = prevPhases.findIndex(p => p.status === 'active');
+      if (activeIdx !== -1 && activeIdx < prevPhases.length - 1) {
+        const nextPhases = [...prevPhases];
+        nextPhases[activeIdx].status = 'done';
+        nextPhases[activeIdx + 1].status = 'active';
+
+        if (!effectiveOnline) {
+          enqueueOfflineAction('ADVANCE_PHASE', `Avançou fase de implantação para: ${nextPhases[activeIdx + 1].name}`);
+        }
+        return nextPhases;
       }
-      return i;
+      return prevPhases;
     });
-
-    localStorage.setItem('@portal-stock-ai:inventory', JSON.stringify(updated));
-
-    const isOff = !effectiveOnline;
-    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const actionText = `Consumo prioritário FEFO: ${qtyToUse}kg de ${item.name} (${item.address}).`;
-
-    if (isOff) {
-      enqueueOfflineAction('FEFO_CONSUME', actionText, { itemId: item.id, qty: qtyToUse });
-    }
-
-    // Add new notification
-    const newNotif: NotificationItem = {
-      id: Date.now(),
-      type: 'info',
-      text: isOff ? `[OFFLINE] ${actionText}` : actionText,
-      time: timeStr,
-      isOffline: isOff
-    };
-    const updatedNotifs = [newNotif, ...notifications];
-    setNotifications(updatedNotifs);
-    localStorage.setItem('@portal-stock-ai:notifications', JSON.stringify(updatedNotifs));
-
-    loadData();
   };
 
-  const dashboardState = kpis.lowStockCount === 0 && criticalExpiry.length === 0
-    ? { label: 'ESTADO SEGURO', color: 'green', desc: 'Estoque operando com níveis adequados e sem vencimentos próximos.' }
-    : kpis.lowStockCount <= 2 && criticalExpiry.length <= 1
-      ? { label: 'ATENÇÃO', color: 'yellow', desc: 'Estoque baixo ou lotes com vencimento próximo. Recomendada ação.' }
-      : { label: 'CRÍTICO', color: 'red', desc: 'Falta crítica ou vencimento imediato detectados! Setor de compras acionado.' };
+  // Toggle Contextual Help Panel
+  const toggleHelp = (section: string) => {
+    setActiveHelpSection(prev => (prev === section ? null : section));
+  };
 
   return (
-    <div className="dashboard-page">
-      {/* Top Offline Warning Banner */}
+    <div className="dashboard-page reference-redesign-page" role="region" aria-label="Painel Geral Stock AI">
+      
+      {/* Offline Alert Banner */}
       {!effectiveOnline && (
-        <div className="offline-alert-banner">
+        <div className="offline-alert-banner" role="alert">
           <div className="banner-content">
             <WifiOff className="banner-icon pulse" size={20} />
             <div>
-              <strong>Modo Offline Ativo (Operação Local)</strong>
-              <p>As alterações feitas agora (baixas, cadastros, relatórios) são salvas com segurança neste dispositivo e serão enviadas para a nuvem automaticamente quando o sinal voltar.</p>
+              <strong>Modo Offline Ativo (Operação Local em São Gonçalo)</strong>
+              <p>Todas as alterações e baixas no estoque estão sendo salvas com segurança no dispositivo. A sincronização com a nuvem ocorrerá automaticamente quando reconectar.</p>
             </div>
           </div>
-          <div className="banner-actions">
-            <button className="btn-banner-action" onClick={toggleSimulatedOffline}>
-              <Wifi size={14} />
-              Simular Reconexão
-            </button>
-          </div>
+          <button className="btn-banner-action" onClick={toggleSimulatedOffline}>
+            <Wifi size={14} />
+            Reconectar Agora
+          </button>
         </div>
       )}
 
-      {/* Online Sync Pending Banner */}
+      {/* Sync Pending Banner */}
       {effectiveOnline && pendingQueue.length > 0 && (
-        <div className="sync-pending-banner">
+        <div className="sync-pending-banner" role="status">
           <div className="banner-content">
             <Database className="banner-icon" size={20} />
             <div>
-              <strong>{pendingQueue.length} {pendingQueue.length === 1 ? 'operação salva' : 'operações salvas'} localmente</strong>
-              <p>Conexão estabelecida! Sincronize com a nuvem para consolidar os relatórios da fábrica.</p>
+              <strong>{pendingQueue.length} {pendingQueue.length === 1 ? 'alteração offline salva' : 'alterações offline salvas'}</strong>
+              <p>Conexão ativa! Clique no botão abaixo para enviar os registros locais para o servidor central.</p>
             </div>
           </div>
           <button className="btn-sync-now" onClick={syncWithCloud} disabled={isSyncing}>
@@ -278,461 +122,347 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Page Header */}
-      <header className="page-header">
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <h1>Painel Geral de Estoque</h1>
-            <button className="btn-help-toggle" onClick={() => setShowHelp(!showHelp)} title="Explicação simples de cada parte do painel">
-              <HelpCircle size={16} />
-              <span>{showHelp ? 'Ocultar Ajuda' : 'Como entender este painel?'}</span>
-              {showHelp ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            </button>
+      {/* Hero Welcome Header (Apple Style) */}
+      <header className="hero-apple-header">
+        <div className="hero-main-title">
+          <div className="hero-badge-group">
+            <span className="location-pill">
+              <MapPin size={13} />
+              Fábrica Três Irmãos • São Gonçalo, RJ
+            </span>
+            <span className="live-clock-pill">
+              <Clock size={13} />
+              {formattedTimeStr} • {formattedDateStr}
+            </span>
           </div>
-          <p>Monitoramento contínuo da Fábrica Três Irmãos • São Gonçalo - RJ</p>
+
+          <h1 className="apple-greeting">{getGreeting()}</h1>
+          <p className="hero-subtitle">Visão geral de implantação e indicadores de performance da equipe fabril</p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <button className="btn-export" onClick={handleExport} disabled={isExporting}>
-            <Download size={16} />
-            {isExporting ? 'Gerando Relatório...' : 'Exportar Fechamento'}
-          </button>
-
-          <div className={`status-badge-glow ${dashboardState.color}`}>
-            <span className="dot"></span>
-            <div>
-              <strong>{dashboardState.label}</strong>
-              <span>{dashboardState.desc}</span>
-            </div>
-          </div>
+        <div className="hero-stage-badge">
+          <span className="stage-label">ETAPA ATUAL</span>
+          <strong className="stage-name">DESENVOLVIMENTO</strong>
         </div>
       </header>
 
-      {/* Accordion / Guia Explicativo do Painel */}
-      {showHelp && (
-        <div className="card help-guide-card">
-          <div className="help-header">
-            <Sparkles size={20} color="var(--primary-color)" />
-            <h3>Guia Rápido: Entenda cada parte do seu Painel</h3>
-          </div>
-          <div className="help-grid">
-            <div className="help-item">
-              <div className="help-icon blue"><Package size={18} /></div>
-              <div>
-                <strong>Categorias de Insumos</strong>
-                <p>Mostra a diversidade de ingredientes cadastrados. Quanto mais organizado, mais fácil identificar o que precisa ser comprado.</p>
-              </div>
+      {/* Stat KPI Cards Row (Matching Reference Image) */}
+      <section className="stat-cards-grid" aria-label="Indicadores de Desempenho">
+        
+        {/* Card 1: Progresso de Tarefas */}
+        <div className="stat-card card">
+          <div className="stat-card-header">
+            <div className="stat-icon-wrapper blue">
+              <CheckCircle2 size={18} />
             </div>
-            <div className="help-item">
-              <div className="help-icon orange"><AlertTriangle size={18} /></div>
-              <div>
-                <strong>Alerta de Estoque Baixo</strong>
-                <p>Indica produtos que atingiram a quantidade mínima de segurança. Evita que a produção da fábrica pare por falta de matéria-prima.</p>
-              </div>
-            </div>
-            <div className="help-item">
-              <div className="help-icon green"><DollarSign size={18} /></div>
-              <div>
-                <strong>Custo Total em Insumos</strong>
-                <p>Valor em Reais (R$) de todas as mercadorias armazenadas. Ajuda no controle financeiro e capital de giro do almoxarifado.</p>
-              </div>
-            </div>
-            <div className="help-item">
-              <div className="help-icon red"><TrendingUp size={18} /></div>
-              <div>
-                <strong>Perdas & Refugos</strong>
-                <p>Soma do peso em kg de produtos descartados (vencimento ou quebra). Acompanhar este número ajuda a reduzir o desperdício.</p>
-              </div>
-            </div>
-            <div className="help-item">
-              <div className="help-icon red"><Clock size={18} /></div>
-              <div>
-                <strong>Vencimentos Críticos (FEFO)</strong>
-                <p>Lotes que vencem em menos de 10 dias. Use o botão <em>"Dar Baixa"</em> para priorizar o uso imediato desses lotes na produção.</p>
-              </div>
-            </div>
-            <div className="help-item">
-              <div className="help-icon blue"><Wifi size={18} /></div>
-              <div>
-                <strong>Modo Offline & Nuvem</strong>
-                <p>Mesmo sem internet no galpão, você pode fazer movimentações! O sistema grava localmente e envia para a nuvem quando houver sinal.</p>
-              </div>
+            <div className="header-right-action">
+              <span className="badge success-pill">+95%</span>
+              <button 
+                className="btn-card-help" 
+                onClick={() => toggleHelp('kpi1')} 
+                title="Explicação deste indicador"
+                aria-label="Explicação sobre Progresso de Tarefas"
+              >
+                <HelpCircle size={15} />
+              </button>
             </div>
           </div>
-        </div>
-      )}
+          <div className="stat-card-body">
+            <span className="stat-title">PROGRESSO DE TAREFAS</span>
+            <div className="stat-main-number">
+              <h2>1<span className="sub-slash">/7</span></h2>
+              <span className="stat-unit">concluídas</span>
+            </div>
+            <div className="stat-progress-bar">
+              <div className="progress-fill" style={{ width: '95%' }}></div>
+            </div>
+          </div>
 
-      {/* Export Feedback Toast */}
-      {exportMessage && (
-        <div className={`export-notification card ${exportMessage.isOffline ? 'offline' : 'success'}`}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            {exportMessage.isOffline ? <WifiOff size={20} color="var(--warning-color)" /> : <CheckCircle2 size={20} color="var(--success-color)" />}
-            <strong>{exportMessage.text}</strong>
-          </div>
-          <button className="close-btn" onClick={() => setExportMessage(null)}>Ok</button>
-        </div>
-      )}
-
-      {/* KPI Cards Grid */}
-      <div className="kpi-grid">
-        {/* KPI 1 */}
-        <div className="kpi-card card">
-          <div className="kpi-header">
-            <div className="kpi-icon-wrapper blue">
-              <Package size={20} />
+          {activeHelpSection === 'kpi1' && (
+            <div className="card-help-popover" role="tooltip">
+              <strong>Como entender:</strong> Indica o volume de tarefas operacionais concluídas na semana em relação à meta da fábrica.
             </div>
-            <span className="badge success">Operacional</span>
-          </div>
-          <div className="kpi-body">
-            <div className="kpi-title-with-info">
-              <h3>Categorias</h3>
-              <Info 
-                size={14} 
-                className="info-icon" 
-                onClick={() => setActiveTooltip(activeTooltip === 'kpi1' ? null : 'kpi1')}
-              />
-            </div>
-            {activeTooltip === 'kpi1' && (
-              <div className="tooltip-popover">Tipos de matérias-primas e insumos cadastrados no almoxarifado.</div>
-            )}
-            <h2>{kpis.totalItems} <span className="kpi-subtext">categorias</span></h2>
-            <p className="kpi-desc">Total de grupos de ingredientes monitorados</p>
-          </div>
+          )}
         </div>
 
-        {/* KPI 2 */}
-        <div className="kpi-card card">
-          <div className="kpi-header">
-            <div className="kpi-icon-wrapper orange">
-              <AlertTriangle size={20} />
+        {/* Card 2: Colaboradores */}
+        <div className="stat-card card">
+          <div className="stat-card-header">
+            <div className="stat-icon-wrapper orange">
+              <Users size={18} />
             </div>
-            <span className={`badge ${kpis.lowStockCount > 0 ? 'danger' : 'success'}`}>
-              {kpis.lowStockCount > 0 ? 'Ação Necessária' : 'Saudável'}
-            </span>
+            <div className="header-right-action">
+              <span className="badge info-pill">Equipe</span>
+              <button 
+                className="btn-card-help" 
+                onClick={() => toggleHelp('kpi2')} 
+                title="Explicação deste indicador"
+                aria-label="Explicação sobre Colaboradores"
+              >
+                <HelpCircle size={15} />
+              </button>
+            </div>
           </div>
-          <div className="kpi-body">
-            <div className="kpi-title-with-info">
-              <h3>Estoque Baixo</h3>
-              <Info 
-                size={14} 
-                className="info-icon" 
-                onClick={() => setActiveTooltip(activeTooltip === 'kpi2' ? null : 'kpi2')}
-              />
+          <div className="stat-card-body">
+            <span className="stat-title">COLABORADORES</span>
+            <div className="stat-main-number">
+              <h2>5</h2>
+              <span className="stat-unit">ativos</span>
             </div>
-            {activeTooltip === 'kpi2' && (
-              <div className="tooltip-popover">Insumos com quantidade atual abaixo da margem mínima estipulada.</div>
-            )}
-            <h2>{kpis.lowStockCount} <span className="kpi-subtext">com alerta</span></h2>
-            <p className="kpi-desc">Itens que precisam de reposição pelo setor de Compras</p>
+            <p className="stat-subtext">Membros alocados no projeto fabril</p>
+          </div>
+
+          {activeHelpSection === 'kpi2' && (
+            <div className="card-help-popover" role="tooltip">
+              <strong>Como entender:</strong> Total de funcionários com acesso ativo ao almoxarifado e registro de movimentações.
+            </div>
+          )}
+        </div>
+
+        {/* Card 3: Comunicação */}
+        <div className="stat-card card">
+          <div className="stat-card-header">
+            <div className="stat-icon-wrapper green">
+              <MessageSquare size={18} />
+            </div>
+            <div className="header-right-action">
+              <span className="badge success-pill">Ativo</span>
+              <button 
+                className="btn-card-help" 
+                onClick={() => toggleHelp('kpi3')} 
+                title="Explicação deste indicador"
+                aria-label="Explicação sobre Comunicação"
+              >
+                <HelpCircle size={15} />
+              </button>
+            </div>
+          </div>
+          <div className="stat-card-body">
+            <span className="stat-title">COMUNICAÇÃO</span>
+            <div className="stat-main-number">
+              <h2>87</h2>
+              <span className="stat-unit">mensagens</span>
+            </div>
+            <p className="stat-subtext">Interações registradas no chat da fábrica</p>
+          </div>
+
+          {activeHelpSection === 'kpi3' && (
+            <div className="card-help-popover" role="tooltip">
+              <strong>Como entender:</strong> Registro automático de trocas de avisos entre a linha de produção e a central de compras.
+            </div>
+          )}
+        </div>
+
+        {/* Card 4: Status de Implantação */}
+        <div className="stat-card card">
+          <div className="stat-card-header">
+            <div className="stat-icon-wrapper purple">
+              <ShieldCheck size={18} />
+            </div>
+            <div className="header-right-action">
+              <span className="badge warning-pill">Fase 3</span>
+              <button 
+                className="btn-card-help" 
+                onClick={() => toggleHelp('kpi4')} 
+                title="Explicação deste indicador"
+                aria-label="Explicação sobre Status de Implantação"
+              >
+                <HelpCircle size={15} />
+              </button>
+            </div>
+          </div>
+          <div className="stat-card-body">
+            <span className="stat-title">STATUS DE IMPLANTAÇÃO</span>
+            <div className="stat-main-number">
+              <h2>50%</h2>
+              <span className="stat-unit">concluído</span>
+            </div>
+            <div className="stat-progress-bar">
+              <div className="progress-fill orange" style={{ width: '50%' }}></div>
+            </div>
+          </div>
+
+          {activeHelpSection === 'kpi4' && (
+            <div className="card-help-popover" role="tooltip">
+              <strong>Como entender:</strong> Percentual de avanço do projeto na Fábrica Três Irmãos rumo ao controle digital completo.
+            </div>
+          )}
+        </div>
+
+      </section>
+
+      {/* Main Section Layout: Fases da Implantação (Esquerda) + Evolução/Distribuição (Direita) */}
+      <div className="main-content-layout-grid">
+        
+        {/* Left Column: Fases da Implantação */}
+        <div className="phases-container-card card">
+          <div className="card-header-with-action">
+            <div>
+              <h3>Fases da Implantação</h3>
+              <p className="card-subtitle">Selecione a etapa ativa para atualizar a visão geral do projeto</p>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <button 
+                className="btn-advance-phase" 
+                onClick={handleAdvancePhase}
+                title="Avançar manualmente para a próxima etapa da fábrica"
+              >
+                Avançar Manuais
+                <ChevronRight size={14} />
+              </button>
+              <button 
+                className="btn-card-help" 
+                onClick={() => toggleHelp('phases')}
+                aria-label="Explicação sobre Fases da Implantação"
+              >
+                <HelpCircle size={16} />
+              </button>
+            </div>
+          </div>
+
+          {activeHelpSection === 'phases' && (
+            <div className="card-help-popover-wide">
+              <strong>Entenda as Fases:</strong> O projeto avança por 5 etapas estratégicas (Planejamento → Requisitos → Desenvolvimento → Homologação → Implantação Final). O indicador laranja marca a fase ativa da fábrica.
+            </div>
+          )}
+
+          {/* Stepper Vertical Timeline (Reference Style) */}
+          <div className="phases-stepper-list">
+            {phases.map((phase) => (
+              <div 
+                key={phase.id} 
+                className={`stepper-item ${phase.status}`}
+              >
+                <div className="stepper-badge-number">
+                  {phase.status === 'done' ? '✓' : phase.id}
+                </div>
+                <div className="stepper-content">
+                  <div className="stepper-title-row">
+                    <h4>{phase.id}. {phase.name}</h4>
+                    <span className={`status-tag ${phase.status}`}>
+                      {phase.status === 'done' ? 'CONCLUÍDO' : phase.status === 'active' ? 'EM ANDAMENTO' : 'PENDENTE'}
+                    </span>
+                  </div>
+                  <p>{phase.desc}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* KPI 3 */}
-        <div className="kpi-card card">
-          <div className="kpi-header">
-            <div className="kpi-icon-wrapper green">
-              <DollarSign size={20} />
-            </div>
-            <span className="badge success">Patrimônio</span>
-          </div>
-          <div className="kpi-body">
-            <div className="kpi-title-with-info">
-              <h3>Custo em Insumos</h3>
-              <Info 
-                size={14} 
-                className="info-icon" 
-                onClick={() => setActiveTooltip(activeTooltip === 'kpi3' ? null : 'kpi3')}
-              />
-            </div>
-            {activeTooltip === 'kpi3' && (
-              <div className="tooltip-popover">Soma do preço de custo multiplicado pela quantidade física armazenada.</div>
-            )}
-            <h2>R$ {kpis.totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
-            <p className="kpi-desc">Valor financeiro investido e guardado no galpão</p>
-          </div>
-        </div>
-
-        {/* KPI 4 */}
-        <div className="kpi-card card">
-          <div className="kpi-header">
-            <div className="kpi-icon-wrapper red">
-              <TrendingUp size={20} />
-            </div>
-            <span className="badge warning">Perdas</span>
-          </div>
-          <div className="kpi-body">
-            <div className="kpi-title-with-info">
-              <h3>Desperdício Acumulado</h3>
-              <Info 
-                size={14} 
-                className="info-icon" 
-                onClick={() => setActiveTooltip(activeTooltip === 'kpi4' ? null : 'kpi4')}
-              />
-            </div>
-            {activeTooltip === 'kpi4' && (
-              <div className="tooltip-popover">Peso total descartado por vencimento, umidade ou falha no manuseio.</div>
-            )}
-            <h2>{kpis.wasteTotal} kg <span className="kpi-subtext">desperdiçados</span></h2>
-            <p className="kpi-desc">Histórico de refugos e descartes na pesagem</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Dashboard Main Grid */}
-      <div className="dashboard-layout-grid">
-        <div className="charts-column">
-          {/* Critical Expiry Table (FEFO) */}
-          <div className="card critical-expiry-card">
-            <div className="chart-header" style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        {/* Right Column: Charts & Metrics */}
+        <div className="side-charts-column">
+          
+          {/* Chart 1: Evolução do Projeto */}
+          <div className="card chart-box-card">
+            <div className="card-header-with-action">
               <div>
-                <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--danger-color)' }}>
-                  <Clock size={18} />
-                  Quadro de Vencimentos Críticos (FEFO - Prioridade)
-                </h3>
-                <p className="subtitle">Lotes com validade em menos de 10 dias. Retire ou dê baixa para priorizar na receita.</p>
+                <h3>Evolução do Projeto</h3>
+                <p className="card-subtitle">Progresso em relação às fases da implantação</p>
               </div>
-              <span className="badge danger">{criticalExpiry.length} {criticalExpiry.length === 1 ? 'Lote Crítico' : 'Lotes Críticos'}</span>
+              <button className="btn-card-help" onClick={() => toggleHelp('chart1')} aria-label="Ajuda sobre Evolução do Projeto">
+                <HelpCircle size={15} />
+              </button>
             </div>
 
-            {criticalExpiry.length === 0 ? (
-              <div className="empty-alerts">
-                <CheckCircle2 size={22} color="var(--success-color)" />
-                <span>Nenhum lote crítico com vencimento em menos de 10 dias. Nível de validade seguro!</span>
-              </div>
-            ) : (
-              <div className="expiry-alerts-list">
-                <table className="expiry-table">
-                  <thead>
-                    <tr>
-                      <th>Lote</th>
-                      <th>Insumo</th>
-                      <th>Endereço</th>
-                      <th>Validade</th>
-                      <th>Urgência</th>
-                      <th>Estoque Atual</th>
-                      <th>Ação Rápida</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {criticalExpiry.map(item => (
-                      <tr key={item.id} className="critical-row">
-                        <td><strong>#{item.id.toString().padStart(4, '0')}</strong></td>
-                        <td>
-                          <strong>{item.name}</strong>
-                          <span className="category-tag">{item.category}</span>
-                        </td>
-                        <td><span className="address-marker">{item.address}</span></td>
-                        <td><strong>{item.expiry}</strong></td>
-                        <td>
-                          <span className={`days-badge ${item.daysLeft <= 3 ? 'critical' : 'warning'}`}>
-                            {item.daysLeft === 0 ? 'Vence Hoje!' : item.daysLeft === 1 ? 'Vence Amanhã' : `${item.daysLeft} dias`}
-                          </span>
-                        </td>
-                        <td><strong>{item.quantity} kg</strong></td>
-                        <td>
-                          <button 
-                            className="btn-use-batch" 
-                            onClick={() => handleConsumeItem(item, 5)}
-                            title="Registra uso de 5kg deste lote na receita para zerar o risco de vencimento"
-                          >
-                            <MinusCircle size={13} />
-                            Dar Baixa (5kg)
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {activeHelpSection === 'chart1' && (
+              <div className="card-help-popover">
+                <strong>Curva de Trajetória:</strong> Linha ascendente de desempenho no cumprimento das metas fabris.
               </div>
             )}
-          </div>
 
-          {/* Waste History Chart */}
-          <div className="card chart-card">
-            <div className="chart-header">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3>Histórico Semanal de Perdas & Refugos (kg)</h3>
-                <span className="target-badge">Meta: Máx 20 kg/sem</span>
-              </div>
-              <p className="subtitle">Evolução do descarte físico em kg por semana. Linha pontilhada representa a meta máxima tolerada.</p>
-            </div>
-            
-            <div className="chart-wrapper">
-              <svg viewBox="0 0 400 160" width="100%" height="200">
+            <div className="svg-chart-container">
+              <svg viewBox="0 0 300 120" width="100%" height="130">
                 <defs>
-                  <linearGradient id="wasteGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--danger-color)" stopOpacity="0.25" />
-                    <stop offset="100%" stopColor="var(--danger-color)" stopOpacity="0.0" />
+                  <linearGradient id="curveGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#f97316" stopOpacity="0.4" />
+                    <stop offset="100%" stopColor="#f97316" stopOpacity="0.0" />
                   </linearGradient>
                 </defs>
-                
-                {/* Grid Lines */}
-                <line x1="40" y1="20" x2="380" y2="20" stroke="var(--border-color)" strokeDasharray="4 4" />
-                <line x1="40" y1="70" x2="380" y2="70" stroke="var(--danger-color)" strokeDasharray="4 4" strokeOpacity="0.6" />
-                <text x="385" y="73" fontSize="9" fill="var(--danger-color)" fontWeight="600">Meta (20kg)</text>
-
-                <line x1="40" y1="120" x2="380" y2="120" stroke="var(--border-color)" />
-                
-                {/* Area Gradient */}
-                {waste.length > 0 && (
-                  <path
-                    d={`M 50 120 
-                        L 50 ${120 - (waste[0]?.losses / 60) * 100}
-                        L 125 ${120 - (waste[1]?.losses / 60) * 100}
-                        L 200 ${120 - (waste[2]?.losses / 60) * 100}
-                        L 275 ${120 - (waste[3]?.losses / 60) * 100}
-                        L 350 ${120 - (waste[4]?.losses / 60) * 100}
-                        L 350 120 Z`}
-                    fill="url(#wasteGradient)"
-                  />
-                )}
-
-                {/* Line Path */}
-                {waste.length > 0 && (
-                  <path
-                    d={`M 50 ${120 - (waste[0]?.losses / 60) * 100}
-                        L 125 ${120 - (waste[1]?.losses / 60) * 100}
-                        L 200 ${120 - (waste[2]?.losses / 60) * 100}
-                        L 275 ${120 - (waste[3]?.losses / 60) * 100}
-                        L 350 ${120 - (waste[4]?.losses / 60) * 100}`}
-                    fill="none"
-                    stroke="var(--danger-color)"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                  />
-                )}
-
-                {/* Data Points */}
-                {waste.map((wItem, index) => {
-                  const cx = 50 + index * 75;
-                  const cy = 120 - (wItem.losses / 60) * 100;
-                  const isOverGoal = wItem.losses > 20;
-
-                  return (
-                    <g key={wItem.id}>
-                      <circle 
-                        cx={cx} 
-                        cy={cy} 
-                        r={isOverGoal ? "5" : "4"} 
-                        fill={isOverGoal ? "var(--danger-color)" : "var(--success-color)"} 
-                        stroke="#ffffff" 
-                        strokeWidth="2" 
-                      />
-                      <text x={cx} y={cy - 10} textAnchor="middle" fontSize="10" fontWeight="700" fill={isOverGoal ? "var(--danger-color)" : "var(--text-main)"}>
-                        {wItem.losses}kg
-                      </text>
-                      <text x={cx} y="140" textAnchor="middle" fontSize="9" fontWeight="600" fill="var(--text-muted)">
-                        {wItem.week}
-                      </text>
-                    </g>
-                  );
-                })}
+                <path d="M 20 100 Q 150 70 280 20 L 280 100 Z" fill="url(#curveGradient)" />
+                <path d="M 20 100 Q 150 70 280 20" fill="none" stroke="#f97316" strokeWidth="3" strokeLinecap="round" />
+                <circle cx="280" cy="20" r="5" fill="#f97316" stroke="#ffffff" strokeWidth="2" />
               </svg>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Sidebar Column */}
-        <div className="notifications-column">
-          {/* ABC Classification Card */}
-          <div className="card classification-breakdown-card" style={{ marginBottom: '1.5rem' }}>
-            <div className="notif-header">
-              <Package size={18} color="var(--primary-color)" />
-              <h3>Classificação Curva ABC</h3>
-            </div>
-            <p className="notif-subtitle">Prioridade Financeira e Volume de Insumos</p>
-            
-            {/* Visual ABC Bar */}
-            <div className="abc-visual-bar">
-              <div className="abc-segment a" style={{ width: '80%' }} title="Curva A: 80% do valor total">A (80%)</div>
-              <div className="abc-segment b" style={{ width: '15%' }} title="Curva B: 15% do valor total">B (15%)</div>
-              <div className="abc-segment c" style={{ width: '5%' }} title="Curva C: 5% do valor total">C</div>
-            </div>
-
-            <div className="classification-box">
-              <div className="class-row">
-                <span className="badge danger">Curva A (Alta)</span>
-                <span>Farinha & Fermentos</span>
-                <strong>80% do Custo</strong>
-              </div>
-              <div className="class-row">
-                <span className="badge warning">Curva B (Média)</span>
-                <span>Manteiga & Açúcar</span>
-                <strong>15% do Custo</strong>
-              </div>
-              <div className="class-row">
-                <span className="badge success">Curva C (Baixa)</span>
-                <span>Sal & Temperos</span>
-                <strong>5% do Custo</strong>
+              <div className="chart-x-labels">
+                <span>JAN</span>
+                <span>FEV</span>
+                <span>MAR</span>
+                <span>ABR</span>
+                <span>MAI</span>
               </div>
             </div>
           </div>
 
-          {/* Activity Feed & Pending Offline Queue Tabs */}
-          <div className="card notifications-card">
-            <div className="tab-buttons-header">
-              <button 
-                className={`tab-btn ${activeTab === 'alerts' ? 'active' : ''}`}
-                onClick={() => setActiveTab('alerts')}
-              >
-                <Bell size={15} />
-                Alertas ({notifications.length})
-              </button>
-              <button 
-                className={`tab-btn ${activeTab === 'queue' ? 'active' : ''}`}
-                onClick={() => setActiveTab('queue')}
-              >
-                <Database size={15} />
-                Fila Offline ({pendingQueue.length})
+          {/* Chart 2: Distribuição de Tarefas */}
+          <div className="card chart-box-card">
+            <div className="card-header-with-action">
+              <div>
+                <h3>Distribuição de Tarefas</h3>
+                <p className="card-subtitle">Progresso das tarefas registradas na fábrica</p>
+              </div>
+              <button className="btn-card-help" onClick={() => toggleHelp('chart2')} aria-label="Ajuda sobre Distribuição de Tarefas">
+                <HelpCircle size={15} />
               </button>
             </div>
 
-            {activeTab === 'alerts' && (
-              <div className="notifications-list">
-                {notifications.map(nItem => (
-                  <div key={nItem.id} className={`notification-item ${nItem.type} ${nItem.isOffline ? 'is-offline' : ''}`}>
-                    <div className="status-indicator"></div>
-                    <div className="notif-content">
-                      <p>{nItem.text}</p>
-                      <span className="time">
-                        {nItem.time} {nItem.isOffline && '• [Salvo no Dispositivo]'}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+            {activeHelpSection === 'chart2' && (
+              <div className="card-help-popover">
+                <strong>Distribuição por Tipo:</strong> Concluídas (azul), Pendentes (laranja) e Avarias (verde).
               </div>
             )}
 
-            {activeTab === 'queue' && (
-              <div className="notifications-list">
-                {pendingQueue.length === 0 ? (
-                  <div className="empty-queue-msg">
-                    <CheckCircle2 size={24} color="var(--success-color)" />
-                    <p>Nenhuma pendência offline. Todos os dados estão sincronizados com a nuvem!</p>
-                  </div>
-                ) : (
-                  pendingQueue.map(item => (
-                    <div key={item.id} className="notification-item warning is-offline">
-                      <div className="status-indicator"></div>
-                      <div className="notif-content">
-                        <p><strong>[{item.type}]</strong> {item.description}</p>
-                        <span className="time">{item.timestamp} • Aguardando Sync</span>
-                      </div>
-                    </div>
-                  ))
-                )}
+            <div className="bar-chart-container">
+              <div className="bar-column">
+                <div className="bar fill-blue" style={{ height: '70%' }}></div>
+                <span>Concluídas</span>
               </div>
-            )}
-
-            <div className="notif-action">
-              <a href="/inventario" className="action-link">
-                Ir para Gestão Completa de Inventário
-                <ArrowUpRight size={14} />
-              </a>
+              <div className="bar-column">
+                <div className="bar fill-orange" style={{ height: '65%' }}></div>
+                <span>Pendentes</span>
+              </div>
+              <div className="bar-column">
+                <div className="bar fill-green" style={{ height: '25%' }}></div>
+                <span>Auditadas</span>
+              </div>
             </div>
           </div>
+
         </div>
+
       </div>
+
+      {/* Bottom Summary Section (Reference Footer Report) */}
+      <footer className="summary-report-footer card">
+        <div className="footer-report-header">
+          <div>
+            <h3>
+              <TrendingUp size={18} color="var(--primary-color)" />
+              Relatório Rápido: Fábrica Três Irmãos
+            </h3>
+            <p>Diagnóstico de inventário e custos mensais de fornecedores</p>
+          </div>
+          <a href="/inventario" className="action-link-footer">
+            Ver Detalhes do Cliente
+            <ArrowUpRight size={14} />
+          </a>
+        </div>
+
+        <div className="report-metrics-grid">
+          <div className="report-metric-item">
+            <span className="metric-label">DIVERGÊNCIA DE CONTAGEM</span>
+            <strong className="metric-val text-green">0.4% <span className="sub-status">(Dentro do limite)</span></strong>
+          </div>
+          <div className="report-metric-item">
+            <span className="metric-label">CUSTO DE INSUMOS / MÊS</span>
+            <strong className="metric-val">R$ 5.430,00</strong>
+          </div>
+          <div className="report-metric-item">
+            <span className="metric-label">ECONOMIA COM DESPERDÍCIO</span>
+            <strong className="metric-val text-orange">R$ 1.280,00 <span className="sub-status">(Com FEFO ativo)</span></strong>
+          </div>
+        </div>
+      </footer>
+
     </div>
   );
 };
