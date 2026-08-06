@@ -20,9 +20,11 @@ import {
   BookOpen,
   ChevronDown,
   ChevronUp,
-  Map
+  Map,
+  Film
 } from 'lucide-react';
 import { useOfflineSync } from '../context/OfflineContext';
+import MotionShowcase from '../components/MotionShowcase';
 
 interface KPIState {
   totalItems: number;
@@ -72,6 +74,9 @@ const Dashboard: React.FC = () => {
 
   // Toggle Training Guide Visibility
   const [showTrainingGuide, setShowTrainingGuide] = useState<boolean>(true);
+
+  // Motion Showcase Modal State
+  const [isMotionOpen, setIsMotionOpen] = useState<boolean>(false);
 
   // Active Speech State for Card Reading
   const [activeSpeechCard, setActiveSpeechCard] = useState<string | null>(null);
@@ -253,6 +258,12 @@ const Dashboard: React.FC = () => {
   return (
     <div className="dashboard-page reference-redesign-page" role="region" aria-label="Painel Geral Stock AI">
       
+      {/* Motion Showcase Presentation Modal */}
+      <MotionShowcase 
+        isOpen={isMotionOpen} 
+        onClose={() => setIsMotionOpen(false)} 
+      />
+
       {/* Offline Alert Banner */}
       {!effectiveOnline && (
         <div className="offline-alert-banner" role="alert">
@@ -299,6 +310,14 @@ const Dashboard: React.FC = () => {
               <Clock size={13} />
               {formattedTimeStr} • {formattedDateStr}
             </span>
+            <button 
+              className="btn-toggle-guide-header motion-header-pill"
+              onClick={() => setIsMotionOpen(true)}
+              title="Assistir a vinheta animada explicativa em motion"
+            >
+              <Film size={13} />
+              <span>🎬 Ver Apresentação Motion</span>
+            </button>
             <button 
               className="btn-toggle-guide-header"
               onClick={() => setShowTrainingGuide(!showTrainingGuide)}
