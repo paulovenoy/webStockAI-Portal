@@ -25,19 +25,21 @@ const TopNavigationHeader: React.FC<{ onToggleHighContrast: () => void; isHighCo
   } = useOfflineSync();
   const location = useLocation();
 
-  const getPageTitle = (path: string) => {
+  const getBreadcrumbInfo = (path: string) => {
     switch (path) {
-      case '/': return 'Dashboard';
-      case '/deposito': return 'Depósito & Layout';
-      case '/inventario': return 'Inventário (FIFO/FEFO)';
-      case '/compras': return 'Central de Compras';
-      case '/gestor': return 'Área do Gestor';
-      case '/ishikawa': return 'Diagrama Ishikawa';
-      case '/5w2h': return 'Plano 5W2H';
-      case '/wms': return 'WMS Inteligente';
-      default: return 'Dashboard';
+      case '/': return { category: 'Visão Geral', page: 'Painel Geral' };
+      case '/deposito': return { category: 'Visão Geral', page: 'Depósito & Layout' };
+      case '/inventario': return { category: 'Gestão & Operações', page: 'Inventário (FIFO/FEFO)' };
+      case '/compras': return { category: 'Gestão & Operações', page: 'Central de Compras' };
+      case '/gestor': return { category: 'Gestão & Operações', page: 'Área do Gestor' };
+      case '/ishikawa': return { category: 'Qualidade & Ferramentas', page: 'Diagrama Ishikawa' };
+      case '/5w2h': return { category: 'Qualidade & Ferramentas', page: 'Plano 5W2H' };
+      case '/wms': return { category: 'Qualidade & Ferramentas', page: 'WMS Inteligente' };
+      default: return { category: 'Visão Geral', page: 'Painel Geral' };
     }
   };
+
+  const breadcrumb = getBreadcrumbInfo(location.pathname);
 
   return (
     <header className="app-top-navbar" role="banner">
@@ -54,9 +56,9 @@ const TopNavigationHeader: React.FC<{ onToggleHighContrast: () => void; isHighCo
         </div>
 
         <nav className="breadcrumbs-nav" aria-label="Caminho da Página (Breadcrumbs)">
-          <span>Visão Geral</span>
+          <span>{breadcrumb.category}</span>
           <ChevronRight size={14} className="breadcrumb-separator" />
-          <span className="current-page">{getPageTitle(location.pathname)}</span>
+          <span className="current-page">{breadcrumb.page}</span>
         </nav>
       </div>
 
@@ -80,7 +82,7 @@ const TopNavigationHeader: React.FC<{ onToggleHighContrast: () => void; isHighCo
           className={`network-status-pill ${effectiveOnline ? 'online' : 'offline'}`}
           onClick={toggleSimulatedOffline}
           title="Clique para alternar simulação Online / Offline"
-          aria-label={effectiveOnline ? "Status: Online • Nuvem Ativa" : "Status: Offline (Simulado)"}
+          aria-label={effectiveOnline ? "Status: Sistema Ativo" : "Status: Offline (Simulado)"}
         >
           <span className="status-dot"></span>
           {effectiveOnline ? (

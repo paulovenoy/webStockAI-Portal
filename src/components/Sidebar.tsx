@@ -2,14 +2,13 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, 
-  Truck, 
-  TrendingUp, 
-  CheckSquare, 
-  FileText, 
-  Users, 
-  UserCheck, 
-  Bot, 
-  Sparkles,
+  Map, 
+  Package, 
+  ShoppingCart, 
+  Settings, 
+  GitBranch, 
+  ClipboardList, 
+  Layers,
   LogOut,
   MapPin,
   ChevronLeft
@@ -20,30 +19,24 @@ const Sidebar: React.FC = () => {
     {
       title: 'VISÃO GERAL',
       items: [
-        { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={18} /> },
-        { name: 'Central de Entregas', path: '/deposito', icon: <Truck size={18} /> }
+        { name: 'Painel Geral', path: '/', icon: <LayoutDashboard size={18} /> },
+        { name: 'Depósito & Layout', path: '/deposito', icon: <Map size={18} /> }
       ]
     },
     {
       title: 'GESTÃO & OPERAÇÕES',
       items: [
-        { name: 'A Demanda', path: '/inventario', icon: <TrendingUp size={18} /> },
-        { name: 'Tarefas (FEFO/FIFO)', path: '/compras', icon: <CheckSquare size={18} /> },
-        { name: 'Anotações & 5W2H', path: '/5w2h', icon: <FileText size={18} /> }
+        { name: 'Inventário (FIFO/FEFO)', path: '/inventario', icon: <Package size={18} /> },
+        { name: 'Central de Compras', path: '/compras', icon: <ShoppingCart size={18} /> },
+        { name: 'Área do Gestor', path: '/gestor', icon: <Settings size={18} /> }
       ]
     },
     {
-      title: 'RELACIONAMENTO',
+      title: 'QUALIDADE & FERRAMENTAS',
       items: [
-        { name: 'Clientes & Fornecedores', path: '/gestor', icon: <Users size={18} /> },
-        { name: 'Membros da Equipe', path: '/ishikawa', icon: <UserCheck size={18} /> }
-      ]
-    },
-    {
-      title: 'FERRAMENTAS',
-      items: [
-        { name: 'Oliver AI', path: '/wms', icon: <Bot size={18} />, badge: 'AI' },
-        { name: 'Recursos AI Unit', path: '/wms', icon: <Sparkles size={18} /> }
+        { name: 'Diagrama Ishikawa', path: '/ishikawa', icon: <GitBranch size={18} /> },
+        { name: 'Plano 5W2H', path: '/5w2h', icon: <ClipboardList size={18} /> },
+        { name: 'WMS Inteligente', path: '/wms', icon: <Layers size={18} />, badge: 'AI' }
       ]
     }
   ];
@@ -68,7 +61,7 @@ const Sidebar: React.FC = () => {
         </button>
       </div>
 
-      {/* Navigation Links Grouped */}
+      {/* Navigation Links Grouped with original Stock AI names */}
       <div className="sidebar-scroll-area">
         {navigationGroups.map((group, gIdx) => (
           <div key={gIdx} className="nav-group">
