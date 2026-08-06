@@ -11,10 +11,15 @@ import {
   Layers,
   LogOut,
   MapPin,
-  ChevronLeft
+  X
 } from 'lucide-react';
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
   const navigationGroups = [
     {
       title: 'VISÃO GERAL',
@@ -42,7 +47,11 @@ const Sidebar: React.FC = () => {
   ];
 
   return (
-    <aside className="sidebar reference-style-sidebar" role="navigation" aria-label="Navegação Principal">
+    <aside 
+      className={`sidebar reference-style-sidebar ${isOpen ? 'mobile-open' : ''}`} 
+      role="navigation" 
+      aria-label="Navegação Principal"
+    >
       {/* Sidebar Header */}
       <div className="sidebar-header">
         <div className="logo-brand">
@@ -56,8 +65,12 @@ const Sidebar: React.FC = () => {
             <span>GESTÃO INTELIGENTE</span>
           </div>
         </div>
-        <button className="btn-collapse-sidebar" aria-label="Recolher Menu">
-          <ChevronLeft size={16} />
+        <button 
+          className="btn-collapse-sidebar" 
+          onClick={onClose}
+          aria-label="Fechar Menu Lateral"
+        >
+          <X size={18} />
         </button>
       </div>
 
@@ -72,6 +85,7 @@ const Sidebar: React.FC = () => {
                   key={item.name}
                   to={item.path}
                   className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
+                  onClick={onClose}
                 >
                   <span className="nav-icon">{item.icon}</span>
                   <span className="nav-label">{item.name}</span>

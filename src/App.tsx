@@ -14,7 +14,11 @@ import { OfflineProvider, useOfflineSync } from './context/OfflineContext';
 import { Wifi, WifiOff, RefreshCw, Database, Eye, ChevronRight, Menu } from 'lucide-react';
 
 // Breadcrumb & Accessibility Component
-const TopNavigationHeader: React.FC<{ onToggleHighContrast: () => void; isHighContrast: boolean }> = ({ onToggleHighContrast, isHighContrast }) => {
+const TopNavigationHeader: React.FC<{ 
+  onToggleHighContrast: () => void; 
+  isHighContrast: boolean;
+  onToggleMobileSidebar: () => void;
+}> = ({ onToggleHighContrast, isHighContrast, onToggleMobileSidebar }) => {
   const { 
     effectiveOnline, 
     isSimulatedOffline, 
@@ -45,7 +49,11 @@ const TopNavigationHeader: React.FC<{ onToggleHighContrast: () => void; isHighCo
     <header className="app-top-navbar" role="banner">
       {/* Left side: Menu toggle & Breadcrumbs */}
       <div className="top-navbar-left">
-        <button className="btn-menu-mobile" aria-label="Abrir Menu Lateral">
+        <button 
+          className="btn-menu-mobile" 
+          onClick={onToggleMobileSidebar}
+          aria-label="Abrir Menu Lateral"
+        >
           <Menu size={18} />
           <span>Menu</span>
         </button>
@@ -56,7 +64,7 @@ const TopNavigationHeader: React.FC<{ onToggleHighContrast: () => void; isHighCo
         </div>
 
         <nav className="breadcrumbs-nav" aria-label="Caminho da Página (Breadcrumbs)">
-          <span>{breadcrumb.category}</span>
+          <span className="breadcrumb-category">{breadcrumb.category}</span>
           <ChevronRight size={14} className="breadcrumb-separator" />
           <span className="current-page">{breadcrumb.page}</span>
         </nav>
@@ -73,7 +81,7 @@ const TopNavigationHeader: React.FC<{ onToggleHighContrast: () => void; isHighCo
             aria-label="Alto Contraste"
           >
             <Eye size={14} />
-            <span>Contraste</span>
+            <span className="access-label">Contraste</span>
           </button>
         </div>
 
@@ -88,12 +96,12 @@ const TopNavigationHeader: React.FC<{ onToggleHighContrast: () => void; isHighCo
           {effectiveOnline ? (
             <>
               <Wifi size={13} />
-              <span>Sistema Ativo</span>
+              <span className="status-text">Sistema Ativo</span>
             </>
           ) : (
             <>
               <WifiOff size={13} />
-              <span>{isSimulatedOffline ? 'Offline (Simulado)' : 'Sem Conexão'}</span>
+              <span className="status-text">{isSimulatedOffline ? 'Offline' : 'Sem Sinal'}</span>
             </>
           )}
         </button>
@@ -107,7 +115,7 @@ const TopNavigationHeader: React.FC<{ onToggleHighContrast: () => void; isHighCo
             aria-label={`${pendingQueue.length} alterações pendentes para sincronizar`}
           >
             <Database size={13} />
-            <span>{pendingQueue.length} {pendingQueue.length === 1 ? 'pendência' : 'pendências'}</span>
+            <span>{pendingQueue.length}</span>
             <RefreshCw size={12} className={isSyncing ? 'spinning' : ''} />
           </button>
         )}
@@ -119,9 +127,18 @@ const TopNavigationHeader: React.FC<{ onToggleHighContrast: () => void; isHighCo
 // Layout Wrapper Component
 const AppLayout: React.FC = () => {
   const [isHighContrast, setIsHighContrast] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const toggleHighContrast = () => {
     setIsHighContrast(prev => !prev);
+  };
+
+  const toggleMobileSidebar = () => {
+    setIsMobileSidebarOpen(prev => !prev);
+  };
+
+  const closeMobileSidebar = () => {
+    setIsMobileSidebarOpen(false);
   };
 
   useEffect(() => {
@@ -136,12 +153,23 @@ const AppLayout: React.FC = () => {
     <div className={`app-container ${isHighContrast ? 'contrast-mode' : ''}`}>
       <TopNavigationHeader 
         onToggleHighContrast={toggleHighContrast} 
-        isHighContrast={isHighContrast} 
+        isHighContrast={isHighContrast}
+        onToggleMobileSidebar={toggleMobileSidebar}
+      />
+
+      {/* Backdrop overlay for mobile menu */}
+      <div 
+        className={`sidebar-backdrop ${isMobileSidebarOpen ? 'active' : ''}`}
+        onClick={closeMobileSidebar}
+        aria-hidden="true"
       />
 
       <div className="app-body">
         <div className="sidebar-wrapper">
-          <Sidebar />
+          <Sidebar 
+            isOpen={isMobileSidebarOpen} 
+            onClose={closeMobileSidebar} 
+          />
         </div>
         <main className="main-content" role="main" id="main-content">
           <Outlet />

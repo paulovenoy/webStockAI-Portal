@@ -3900,4 +3900,151 @@ body.high-contrast strong {
   outline-offset: 2px !important;
 }
 
+/* ==========================================================================
+   MOBILE & TABLET RESPONSIVENESS (BREAKPOINTS)
+   ========================================================================== */
+
+/* Mobile Backdrop Overlay */
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Tablet & Mobile Layout (< 1024px) */
+@media (max-width: 1024px) {
+  .app-container {
+    overflow-x: hidden;
+  }
+
+  .btn-menu-mobile {
+    display: inline-flex !important;
+  }
+
+  /* Off-Canvas Sidebar Drawer */
+  .reference-style-sidebar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 1000 !important;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 10px 0 25px rgba(0, 0, 0, 0.3);
+    height: 100vh !important;
+  }
+
+  .reference-style-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .main-content {
+    height: auto !important;
+    min-height: calc(100vh - 52px);
+    padding: 1.25rem !important;
+  }
+
+  .main-content-layout-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hero-apple-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 1rem !important;
+  }
+
+  .hero-stage-badge {
+    text-align: left !important;
+    width: 100%;
+  }
+}
+
+/* Small Tablets & Smartphones (< 768px) */
+@media (max-width: 768px) {
+  .app-top-navbar {
+    padding: 0 0.85rem !important;
+  }
+
+  .breadcrumbs-nav .breadcrumb-category {
+    display: none;
+  }
+
+  .breadcrumbs-nav .breadcrumb-separator {
+    display: none;
+  }
+
+  .apple-greeting {
+    font-size: 1.6rem !important;
+  }
+
+  .stat-cards-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.85rem !important;
+  }
+
+  .stat-card {
+    padding: 1rem !important;
+  }
+
+  .stat-main-number h2 {
+    font-size: 1.5rem !important;
+  }
+
+  .expiry-alerts-list {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 1.25rem;
+  }
+
+  .expiry-table {
+    min-width: 580px !important;
+  }
+
+  .report-metrics-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .btn-access-toggle .access-label {
+    display: none;
+  }
+
+  .network-status-pill .status-text {
+    font-size: 0.7rem;
+  }
+}
+
+/* Ultra Small Phones (< 480px) */
+@media (max-width: 480px) {
+  .stat-cards-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hero-badge-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .btn-advance-phase {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .card-header-with-action {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+}
+
+
 
