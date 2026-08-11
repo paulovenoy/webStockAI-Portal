@@ -1,5 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Layers, Barcode, Navigation, ClipboardCheck, Info, CheckCircle2, AlertTriangle, HelpCircle } from 'lucide-react';
+import { 
+  Layers, 
+  Barcode, 
+  Navigation, 
+  ClipboardCheck, 
+  CheckCircle2, 
+  AlertTriangle, 
+  HelpCircle,
+  Volume2,
+  VolumeX,
+  Play,
+  SkipForward,
+  SkipBack,
+  RotateCcw,
+  Sparkles,
+  ArrowRight
+} from 'lucide-react';
 
 interface InventoryItem {
   id: number;
@@ -34,6 +50,133 @@ const WMSInteligente: React.FC = () => {
   const [selectedAuditAddr, setSelectedAuditAddr] = useState('Corredor A - A1');
   const [countedQty, setCountedQty] = useState('');
   const [auditLog, setAuditLog] = useState<Array<{ id: number; date: string; address: string; system: number; physical: number; accuracy: number }>>([]);
+
+  // FEFO Voice picking navigation state
+  const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
+  const [isSpeakingStep, setIsSpeakingStep] = useState<boolean>(false);
+  const [isAutoPlayingVoice, setIsAutoPlayingVoice] = useState<boolean>(false);
+
+  const pickingSteps = [
+    {
+      stepNumber: 1,
+      title: 'Ponto de Partida',
+      address: 'Doca D1 (Entrada)',
+      x: 15,
+      y: 160,
+      voiceText: 'Iniciando rota de picking FEFO. Saia da Doca D1 de Recebimento e siga em frente.',
+      directiveText: 'Origem na Doca D1. Mantenha-se à direita do corredor principal.'
+    },
+    {
+      stepNumber: 2,
+      title: 'Corredor Principal A',
+      address: 'Corredor A',
+      x: 70,
+      y: 160,
+      voiceText: 'Siga em frente pelo Corredor Principal A por dez metros.',
+      directiveText: 'Avançar 10m no Corredor A. Atenção ao cruzamento.'
+    },
+    {
+      stepNumber: 3,
+      title: 'Entrada no Corredor B',
+      address: 'Corredor B',
+      x: 70,
+      y: 290,
+      voiceText: 'Vire a esquerda e entre no Corredor B.',
+      directiveText: 'Vire à esquerda no Corredor B. Acessar prateleiras de refrigerados.'
+    },
+    {
+      stepNumber: 4,
+      title: 'Coleta B2 (Manteiga)',
+      address: 'Corredor B - B2',
+      x: 165,
+      y: 290,
+      voiceText: 'Passe por B2 Manteiga sem Sal. Retire vinte quilos do lote com vencimento em três dias. Siga reto.',
+      directiveText: 'Passe por B2 (Manteiga) - Retirar 20kg [Vencimento em 3 dias]. Siga reto.'
+    },
+    {
+      stepNumber: 5,
+      title: 'Coleta B1 (Fermento)',
+      address: 'Corredor B - B1',
+      x: 165,
+      y: 230,
+      voiceText: 'Siga reto no Corredor B até a posição B1 Fermento Biológico e retire dez quilos.',
+      directiveText: 'Siga reto até B1 (Fermento Biológico) - Retirar 10kg.'
+    },
+    {
+      stepNumber: 6,
+      title: 'Destino Final: Expedição',
+      address: 'Doca D2 (Expedição)',
+      x: 575,
+      y: 160,
+      voiceText: 'Vire a direita e siga reto até a Doca D2 de Expedição de Produção. Rota concluída.',
+      directiveText: 'Vire à direita e siga reto até a Doca D2 de Expedição.'
+    }
+  ];
+
+  const speakText = (text: string, onEnd?: () => void) => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'pt-BR';
+      utterance.rate = 0.95;
+      utterance.onstart = () => setIsSpeakingStep(true);
+      utterance.onend = () => {
+        setIsSpeakingStep(false);
+        if (onEnd) onEnd();
+      };
+      utterance.onerror = () => setIsSpeakingStep(false);
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  const handleSpeakCurrentStep = (stepIdx: number) => {
+    setCurrentStepIndex(stepIdx);
+    speakText(pickingSteps[stepIdx].voiceText);
+  };
+
+  const handleStopSpeech = () => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    setIsSpeakingStep(false);
+    setIsAutoPlayingVoice(false);
+  };
+
+  const handleNextStep = () => {
+    if (currentStepIndex < pickingSteps.length - 1) {
+      const nextIdx = currentStepIndex + 1;
+      setCurrentStepIndex(nextIdx);
+      speakText(pickingSteps[nextIdx].voiceText);
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (currentStepIndex > 0) {
+      const prevIdx = currentStepIndex - 1;
+      setCurrentStepIndex(prevIdx);
+      speakText(pickingSteps[prevIdx].voiceText);
+    }
+  };
+
+  const handleAutoPlaySequence = () => {
+    setIsAutoPlayingVoice(true);
+    setCurrentStepIndex(0);
+
+    const playNext = (index: number) => {
+      if (index >= pickingSteps.length) {
+        setIsAutoPlayingVoice(false);
+        return;
+      }
+      setCurrentStepIndex(index);
+      speakText(pickingSteps[index].voiceText, () => {
+        setTimeout(() => {
+          playNext(index + 1);
+        }, 1200);
+      });
+    };
+
+    playNext(0);
+  };
 
   useEffect(() => {
     fetchData();
@@ -256,44 +399,6 @@ const WMSInteligente: React.FC = () => {
   const loadMockBarcode = (code: string) => {
     setScannedCode(code);
   };
-
-  // 3. Picking route optimization calculations (find expiring lot first and draw path)
-  const getPickingRouteInfo = () => {
-    if (inventory.length === 0) return null;
-    const sorted = [...inventory].sort((a, b) => new Date(a.expiry).getTime() - new Date(b.expiry).getTime());
-
-    // Find the next two expiring lots
-    const nextTwo = sorted.slice(0, 2);
-
-    // Route coordinates on map:
-    // D1 Doca Recebimento: x=15, y=160
-    // D2 Doca Expedição: x=577, y=160
-    // Racks:
-    // A1 Farinha: x=165, y=70
-    // A2 Açúcar: x=165, y=130
-    // B1 Fermento: x=165, y=230
-    // B2 Manteiga: x=165, y=290
-    // C1 Condimentos: x=340, y=180
-
-    const coordinates: Record<string, { x: number; y: number }> = {
-      'Corredor A - A1': { x: 165, y: 70 },
-      'Corredor A - A2': { x: 165, y: 130 },
-      'Corredor B - B1': { x: 165, y: 230 },
-      'Corredor B - B2': { x: 165, y: 290 },
-      'Corredor C - C1': { x: 340, y: 180 }
-    };
-
-    const firstCoord = coordinates[nextTwo[0]?.address] || { x: 165, y: 70 };
-    const secondCoord = nextTwo[1] ? (coordinates[nextTwo[1].address] || { x: 165, y: 130 }) : firstCoord;
-
-    return {
-      lots: nextTwo,
-      firstCoord,
-      secondCoord
-    };
-  };
-
-  const routeInfo = getPickingRouteInfo();
 
   // 4. Cycle Counting program
   const handleCycleAuditSubmit = (e: React.FormEvent) => {
@@ -553,123 +658,263 @@ const WMSInteligente: React.FC = () => {
             </div>
           )}
 
-          {/* TAB 3: ROUTE OPTIMIZATION */}
+          {/* TAB 3: ROUTE OPTIMIZATION & VOICE GUIDED NAVIGATION */}
           {activeTab === 'picking' && (
             <div>
-              <div className="title-section-wrapper">
-                <Navigation size={18} color="var(--primary-color)" />
-                <h3>Otimizador Inteligente de Rota de Coleta (FEFO Picking)</h3>
-              </div>
-              <p className="subtitle">Lógica de caminhada ótima: o sistema calcula o menor trajeto aéreo pelas prateleiras baseado nos vencimentos iminentes</p>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', alignItems: 'center' }}>
-                <div className="svg-map-wrapper">
-                  <svg viewBox="0 0 600 360" width="100%" height="100%">
-                    <rect width="600" height="360" fill="#f8fafc" />
-                    
-                    {/* Doca Recebimento D1 */}
-                    <rect x="15" y="130" width="10" height="60" fill="#10b981" />
-                    <text x="30" y="165" fontSize="8" fontWeight="800" fill="#047857" transform="rotate(-90 30 165)">D1</text>
-                    
-                    {/* Doca Expedição D2 */}
-                    <rect x="575" y="130" width="10" height="60" fill="#3b82f6" />
-                    <text x="560" y="165" fontSize="8" fontWeight="800" fill="#1d4ed8" transform="rotate(90 560 165)">D2</text>
-
-                    {/* Racks */}
-                    <rect x="120" y="50" width="90" height="30" rx="3" fill="#cbd5e1" />
-                    <text x="165" y="68" textAnchor="middle" fontSize="8" fontWeight="700" fill="#475569">A1 (FARINHA)</text>
-                    
-                    <rect x="120" y="110" width="90" height="30" rx="3" fill="#cbd5e1" />
-                    <text x="165" y="128" textAnchor="middle" fontSize="8" fontWeight="700" fill="#475569">A2 (AÇÚCAR)</text>
-
-                    <rect x="120" y="210" width="90" height="30" rx="3" fill="#cbd5e1" />
-                    <text x="165" y="228" textAnchor="middle" fontSize="8" fontWeight="700" fill="#475569">B1 (FERMENTO)</text>
-
-                    <rect x="120" y="270" width="90" height="30" rx="3" fill="#cbd5e1" />
-                    <text x="165" y="288" textAnchor="middle" fontSize="8" fontWeight="700" fill="#475569">B2 (MANTEIGA)</text>
-
-                    <rect x="290" y="120" width="80" height="110" rx="3" fill="#cbd5e1" />
-                    <text x="330" y="180" textAnchor="middle" fontSize="8" fontWeight="700" fill="#475569" transform="rotate(-90 330 180)">C1 (CONDIMENTOS)</text>
-
-                    {/* Draw Optimized Route Path if routeInfo exists */}
-                    {routeInfo && (
-                      <g>
-                        {/* Route Line starting at D1 Doca -> First Rack -> Second Rack -> D2 Doca */}
-                        <path 
-                          d={`M 15 160 
-                              L 70 160 
-                              L 70 ${routeInfo.firstCoord.y} 
-                              L ${routeInfo.firstCoord.x} ${routeInfo.firstCoord.y}
-                              L ${routeInfo.secondCoord.x} ${routeInfo.secondCoord.y} 
-                              L 260 ${routeInfo.secondCoord.y}
-                              L 260 160 
-                              L 575 160`} 
-                          fill="none" 
-                          className="route-optimized-path"
-                        />
-                        {/* Step markers */}
-                        <circle cx="15" cy="160" r="10" className="route-step-marker" />
-                        <text x="15" y="163" textAnchor="middle" className="route-step-text">D1</text>
-
-                        <circle cx={routeInfo.firstCoord.x} cy={routeInfo.firstCoord.y} r="10" className="route-step-marker" />
-                        <text x={routeInfo.firstCoord.x} y={routeInfo.firstCoord.y + 3} textAnchor="middle" className="route-step-text">1</text>
-
-                        {routeInfo.lots[1] && (
-                          <>
-                            <circle cx={routeInfo.secondCoord.x} cy={routeInfo.secondCoord.y} r="10" className="route-step-marker" />
-                            <text x={routeInfo.secondCoord.x} y={routeInfo.secondCoord.y + 3} textAnchor="middle" className="route-step-text">2</text>
-                          </>
-                        )}
-
-                        <circle cx="575" cy="160" r="10" className="route-step-marker" />
-                        <text x="575" y="163" textAnchor="middle" className="route-step-text">D2</text>
-                      </g>
-                    )}
-                  </svg>
+              <div className="title-section-wrapper" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Navigation size={18} color="var(--primary-color)" />
+                    <h3>Otimizador de Rota FEFO & Assistente por Voz</h3>
+                  </div>
+                  <p className="subtitle">Navegação passo a passo com síntese de voz (PT-BR) para orientação do operador no galpão</p>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <h4 style={{ color: 'var(--text-main)', fontSize: '0.95rem' }}>Instruções de Picking Sequencial (FEFO):</h4>
-                  {routeInfo && routeInfo.lots.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      <div className="cause-card-item" style={{ borderLeftColor: '#10b981', margin: 0 }}>
-                        <div>
-                          <strong style={{ fontSize: '0.85rem' }}>Passo 1: Coleta Prioritária</strong>
-                          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                            Vá ao <strong>{routeInfo.lots[0].address}</strong> e retire o lote <strong>#{routeInfo.lots[0].id.toString().slice(-6)}</strong> de {routeInfo.lots[0].name}.
-                            <br />Qtd: {routeInfo.lots[0].quantity}kg | Validade: {routeInfo.lots[0].expiry}
-                          </p>
-                        </div>
-                      </div>
+                {/* Voice Navigation Bar */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#0f172a', color: '#fff', padding: '0.5rem 0.85rem', borderRadius: 'var(--radius-lg)', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+                  <button
+                    onClick={handleAutoPlaySequence}
+                    disabled={isAutoPlayingVoice}
+                    style={{ background: 'var(--primary-color)', color: '#fff', padding: '0.4rem 0.75rem', borderRadius: 'var(--radius-md)', fontSize: '0.775rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                    title="Iniciar navegação completa em áudio por todos os passos da rota"
+                  >
+                    <Play size={13} />
+                    <span>{isAutoPlayingVoice ? 'Reproduzindo Rota...' : '🔊 Iniciar Voz'}</span>
+                  </button>
 
-                      {routeInfo.lots[1] && (
-                        <div className="cause-card-item" style={{ borderLeftColor: '#10b981', margin: 0 }}>
-                          <div>
-                            <strong style={{ fontSize: '0.85rem' }}>Passo 2: Próxima Validade</strong>
-                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                              Vá ao <strong>{routeInfo.lots[1].address}</strong> e colete o lote <strong>#{routeInfo.lots[1].id.toString().slice(-6)}</strong> de {routeInfo.lots[1].name}.
-                              <br />Qtd: {routeInfo.lots[1].quantity}kg | Validade: {routeInfo.lots[1].expiry}
-                            </p>
-                          </div>
-                        </div>
-                      )}
+                  <button
+                    onClick={handlePrevStep}
+                    disabled={currentStepIndex === 0}
+                    style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', padding: '0.4rem 0.6rem', borderRadius: 'var(--radius-md)', fontSize: '0.75rem', fontWeight: 700 }}
+                    title="Passo Anterior"
+                  >
+                    <SkipBack size={13} />
+                  </button>
 
-                      <div className="cause-card-item" style={{ borderLeftColor: '#3b82f6', margin: 0 }}>
-                        <div>
-                          <strong style={{ fontSize: '0.85rem' }}>Passo Final: Entrega na Expedição</strong>
-                          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                            Encaminhe todos os insumos coletados para a <strong>Doca de Expedição D2</strong> e registre a saída no scanner.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="empty-address-msg">
-                      <Info size={16} />
-                      <span>Sem dados de rota disponíveis. Certifique-se de que há lotes cadastrados.</span>
-                    </div>
+                  <button
+                    onClick={() => handleSpeakCurrentStep(currentStepIndex)}
+                    style={{ background: isSpeakingStep ? '#10b981' : 'rgba(255,255,255,0.1)', color: '#fff', padding: '0.4rem 0.6rem', borderRadius: 'var(--radius-md)', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                    title="Ouvir instrução de voz do passo atual"
+                  >
+                    {isSpeakingStep ? <VolumeX size={13} /> : <Volume2 size={13} />}
+                    <span>{isSpeakingStep ? 'Falando...' : 'Ouvir Passo'}</span>
+                  </button>
+
+                  <button
+                    onClick={handleNextStep}
+                    disabled={currentStepIndex === pickingSteps.length - 1}
+                    style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', padding: '0.4rem 0.6rem', borderRadius: 'var(--radius-md)', fontSize: '0.75rem', fontWeight: 700 }}
+                    title="Próximo Passo"
+                  >
+                    <SkipForward size={13} />
+                  </button>
+
+                  {isSpeakingStep && (
+                    <button
+                      onClick={handleStopSpeech}
+                      style={{ background: '#ef4444', color: '#fff', padding: '0.4rem 0.6rem', borderRadius: 'var(--radius-md)', fontSize: '0.75rem', fontWeight: 700 }}
+                      title="Parar Áudio"
+                    >
+                      ⏹️ Parar
+                    </button>
                   )}
                 </div>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', alignItems: 'start', marginTop: '1rem' }}>
+                
+                {/* SVG Map of the Warehouse with Step Points & Active Operator Indicator */}
+                <div className="svg-map-wrapper" style={{ position: 'relative', borderRadius: 'var(--radius-xl)', overflow: 'hidden', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-card)' }}>
+                  <svg viewBox="0 0 600 360" width="100%" height="100%">
+                    <rect width="600" height="360" fill="#0f172a" />
+                    
+                    {/* Grid lines */}
+                    <g stroke="rgba(255,255,255,0.05)" strokeWidth="1">
+                      <line x1="0" y1="90" x2="600" y2="90" />
+                      <line x1="0" y1="180" x2="600" y2="180" />
+                      <line x1="0" y1="270" x2="600" y2="270" />
+                      <line x1="150" y1="0" x2="150" y2="360" />
+                      <line x1="300" y1="0" x2="300" y2="360" />
+                      <line x1="450" y1="0" x2="450" y2="360" />
+                    </g>
+
+                    {/* Doca Recebimento D1 */}
+                    <rect x="15" y="130" width="12" height="60" fill="#10b981" rx="2" />
+                    <text x="32" y="165" fontSize="9" fontWeight="800" fill="#10b981">DOCA D1 (ENTRADA)</text>
+                    
+                    {/* Doca Expedição D2 */}
+                    <rect x="575" y="130" width="12" height="60" fill="#38bdf8" rx="2" />
+                    <text x="560" y="165" fontSize="9" fontWeight="800" fill="#38bdf8" textAnchor="end">DOCA D2 (EXPEDIÇÃO)</text>
+
+                    {/* Racks */}
+                    <rect x="120" y="50" width="90" height="30" rx="4" fill="#334155" stroke="#475569" />
+                    <text x="165" y="69" textAnchor="middle" fontSize="9" fontWeight="800" fill="#94a3b8">A1 (FARINHA)</text>
+                    
+                    <rect x="120" y="110" width="90" height="30" rx="4" fill="#334155" stroke="#475569" />
+                    <text x="165" y="129" textAnchor="middle" fontSize="9" fontWeight="800" fill="#94a3b8">A2 (AÇÚCAR)</text>
+
+                    <rect x="120" y="210" width="90" height="30" rx="4" fill="#334155" stroke="#475569" />
+                    <text x="165" y="229" textAnchor="middle" fontSize="9" fontWeight="800" fill="#94a3b8">B1 (FERMENTO)</text>
+
+                    {/* Highlighted B2 Rack for Manteiga */}
+                    <rect x="120" y="270" width="90" height="30" rx="4" fill={currentStepIndex === 3 ? '#ea580c' : '#334155'} stroke={currentStepIndex === 3 ? '#fff' : '#475569'} strokeWidth={currentStepIndex === 3 ? 2 : 1} />
+                    <text x="165" y="289" textAnchor="middle" fontSize="9" fontWeight="800" fill={currentStepIndex === 3 ? '#fff' : '#94a3b8'}>B2 (MANTEIGA)</text>
+
+                    <rect x="290" y="120" width="80" height="110" rx="4" fill="#334155" stroke="#475569" />
+                    <text x="330" y="180" textAnchor="middle" fontSize="9" fontWeight="800" fill="#94a3b8" transform="rotate(-90 330 180)">C1 (CONDIMENTOS)</text>
+
+                    {/* Full Pick Route Path Line */}
+                    <path 
+                      d="M 15 160 L 70 160 L 70 290 L 165 290 L 165 230 L 260 230 L 260 160 L 575 160" 
+                      fill="none" 
+                      stroke="#ea580c" 
+                      strokeWidth="3" 
+                      strokeDasharray="6 4"
+                    />
+
+                    {/* Render Step Nodes on Map */}
+                    {pickingSteps.map((step, idx) => {
+                      const isActive = idx === currentStepIndex;
+                      const isPast = idx < currentStepIndex;
+
+                      return (
+                        <g key={step.stepNumber} transform={`translate(${step.x}, ${step.y})`} style={{ cursor: 'pointer' }} onClick={() => handleSpeakCurrentStep(idx)}>
+                          <circle 
+                            r={isActive ? "14" : "10"} 
+                            fill={isActive ? '#ea580c' : isPast ? '#10b981' : '#1e293b'} 
+                            stroke="#fff" 
+                            strokeWidth={isActive ? "3" : "1.5"} 
+                          />
+                          <text y="3.5" textAnchor="middle" fill="#fff" fontSize={isActive ? "10" : "8"} fontWeight="800">
+                            {step.stepNumber}
+                          </text>
+                        </g>
+                      );
+                    })}
+
+                    {/* Animated Active Operator Dot */}
+                    {pickingSteps[currentStepIndex] && (
+                      <g transform={`translate(${pickingSteps[currentStepIndex].x}, ${pickingSteps[currentStepIndex].y})`}>
+                        <circle r="18" fill="rgba(234, 88, 12, 0.4)">
+                          <animate attributeName="r" values="14;22;14" dur="1.5s" repeatCount="indefinite" />
+                          <animate attributeName="opacity" values="0.8;0.2;0.8" dur="1.5s" repeatCount="indefinite" />
+                        </circle>
+                      </g>
+                    )}
+
+                  </svg>
+
+                  <div style={{ position: 'absolute', bottom: '10px', left: '10px', right: '10px', background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)', color: '#fff', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ background: '#ea580c', color: '#fff', fontWeight: 800, fontSize: '0.75rem', width: 22, height: 22, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {pickingSteps[currentStepIndex]?.stepNumber}
+                      </span>
+                      <strong style={{ fontSize: '0.825rem' }}>{pickingSteps[currentStepIndex]?.title}</strong>
+                    </div>
+                    <span style={{ fontSize: '0.725rem', color: '#94a3b8' }}>
+                      Passo {currentStepIndex + 1} de {pickingSteps.length}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Directive & Speech Card */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  
+                  <div style={{ background: 'linear-gradient(145deg, #0f172a 0%, #1e293b 100%)', color: '#fff', padding: '1.5rem', borderRadius: 'var(--radius-xl)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: 'var(--shadow-card)' }}>
+                    
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                      <span style={{ background: 'rgba(234, 88, 12, 0.2)', color: '#fb923c', fontSize: '0.725rem', fontWeight: 800, padding: '0.25rem 0.6rem', borderRadius: '9999px', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                        <Sparkles size={12} /> INSTRUÇÃO DE VOZ DO WMS
+                      </span>
+                      {isSpeakingStep && (
+                        <span style={{ color: '#4ade80', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <Volume2 size={13} className="spinning" /> Áudio Ativo
+                        </span>
+                      )}
+                    </div>
+
+                    <h4 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fff', marginBottom: '0.5rem' }}>
+                      {pickingSteps[currentStepIndex]?.title}
+                    </h4>
+
+                    {/* Speech Text Box */}
+                    <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: 'var(--radius-lg)', borderLeft: '4px solid #ea580c', marginBottom: '1.25rem' }}>
+                      <p style={{ fontSize: '0.925rem', color: '#f8fafc', fontWeight: 600, lineHeight: 1.5 }}>
+                        "{pickingSteps[currentStepIndex]?.voiceText}"
+                      </p>
+                    </div>
+
+                    {/* Operational Instruction */}
+                    <div style={{ fontSize: '0.825rem', color: '#94a3b8', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <strong style={{ color: '#cbd5e1' }}>Orientação Técnica para o Operador:</strong>
+                      <p>{pickingSteps[currentStepIndex]?.directiveText}</p>
+                    </div>
+
+                    <div style={{ marginTop: '1.25rem', display: 'flex', gap: '0.5rem' }}>
+                      <button
+                        onClick={() => handleSpeakCurrentStep(currentStepIndex)}
+                        style={{ flex: 1, padding: '0.65rem', background: '#ea580c', color: '#fff', borderRadius: 'var(--radius-md)', fontWeight: 800, fontSize: '0.825rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
+                      >
+                        <Volume2 size={15} />
+                        <span>Ouvir Novamente</span>
+                      </button>
+
+                      {currentStepIndex < pickingSteps.length - 1 ? (
+                        <button
+                          onClick={handleNextStep}
+                          style={{ padding: '0.65rem 1rem', background: 'rgba(255,255,255,0.1)', color: '#fff', borderRadius: 'var(--radius-md)', fontWeight: 800, fontSize: '0.825rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                        >
+                          <span>Próximo Passo</span>
+                          <ArrowRight size={14} />
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleSpeakCurrentStep(0)}
+                          style={{ padding: '0.65rem 1rem', background: '#10b981', color: '#fff', borderRadius: 'var(--radius-md)', fontWeight: 800, fontSize: '0.825rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                        >
+                          <RotateCcw size={14} />
+                          <span>Reiniciar Rota</span>
+                        </button>
+                      )}
+                    </div>
+
+                  </div>
+
+                  {/* List of all steps */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '200px', overflowY: 'auto' }}>
+                    {pickingSteps.map((step, idx) => (
+                      <div 
+                        key={step.stepNumber}
+                        onClick={() => handleSpeakCurrentStep(idx)}
+                        style={{ 
+                          padding: '0.65rem 0.85rem', 
+                          borderRadius: 'var(--radius-md)', 
+                          background: idx === currentStepIndex ? 'var(--primary-light)' : 'var(--bg-color)', 
+                          border: idx === currentStepIndex ? '1px solid var(--primary-color)' : '1px solid var(--border-color)',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: idx === currentStepIndex ? 'var(--primary-color)' : 'var(--text-muted)' }}>
+                            #{step.stepNumber}
+                          </span>
+                          <span style={{ fontSize: '0.8rem', fontWeight: idx === currentStepIndex ? 800 : 600, color: 'var(--text-main)' }}>
+                            {step.title}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                          {step.address}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                </div>
+
               </div>
             </div>
           )}

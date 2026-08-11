@@ -11,7 +11,8 @@ import {
   Layers,
   LogOut,
   MapPin,
-  X
+  X,
+  Truck
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -33,6 +34,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
       items: [
         { name: 'Inventário (FIFO/FEFO)', path: '/inventario', icon: <Package size={18} /> },
         { name: 'Central de Compras', path: '/compras', icon: <ShoppingCart size={18} /> },
+        { name: 'Rotas & Fornecedores', path: '/rotas-fornecedores', icon: <Truck size={18} />, badge: 'ROTA' },
         { name: 'Área do Gestor', path: '/gestor', icon: <Settings size={18} /> }
       ]
     },

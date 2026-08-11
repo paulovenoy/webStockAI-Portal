@@ -10,6 +10,7 @@ import Gestor from './pages/Gestor';
 import Ishikawa from './pages/Ishikawa';
 import Plano5W2H from './pages/Plano5W2H';
 import WMSInteligente from './pages/WMSInteligente';
+import RotasFornecedores from './pages/RotasFornecedores';
 import { OfflineProvider, useOfflineSync } from './context/OfflineContext';
 import { AccessibilityHub } from './components/AccessibilityHub';
 import { Wifi, WifiOff, RefreshCw, Database, Eye, ChevronRight, Menu, Volume2, VolumeX, ZoomIn, ZoomOut } from 'lucide-react';
@@ -39,6 +40,7 @@ const TopNavigationHeader: React.FC<{
       case '/deposito': return { category: 'Visão Geral', page: 'Depósito & Layout' };
       case '/inventario': return { category: 'Gestão & Operações', page: 'Inventário (FIFO/FEFO)' };
       case '/compras': return { category: 'Gestão & Operações', page: 'Central de Compras' };
+      case '/rotas-fornecedores': return { category: 'Gestão & Operações', page: 'Rotas Logísticas & Fornecedores' };
       case '/gestor': return { category: 'Gestão & Operações', page: 'Área do Gestor' };
       case '/ishikawa': return { category: 'Qualidade & Ferramentas', page: 'Diagrama Ishikawa' };
       case '/5w2h': return { category: 'Qualidade & Ferramentas', page: 'Plano 5W2H' };
@@ -260,6 +262,7 @@ const App: React.FC = () => {
             <Route path="deposito" element={<Deposito />} />
             <Route path="inventario" element={<Inventario />} />
             <Route path="compras" element={<Compras />} />
+            <Route path="rotas-fornecedores" element={<RotasFornecedores />} />
             <Route path="gestor" element={<Gestor />} />
             <Route path="ishikawa" element={<Ishikawa />} />
             <Route path="5w2h" element={<Plano5W2H />} />
